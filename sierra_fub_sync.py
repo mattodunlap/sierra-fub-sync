@@ -97,6 +97,66 @@ def get_sierra_leads(page=1, page_size=100):
     return r.json().get("data", {}).get("leads", [])
 
 
+def get_sierra_total_pages(page_size=100):
+    """Find the total number of pages in /leads/find."""
+    r = requests.get(
+        f"{SIERRA_BASE}/leads/find",
+        headers=SIERRA_HEADERS,
+        params={"pageNumber": 1, "pageSize": page_size},
+        timeout=30,
+    )
+    r.raise_for_status()
+    return r.json().get("data", {}).get("totalPages", 1)
+
+
+def sync_recent(num_recent_pages=2):
+    """Incremental sync - only checks the last few pages of Sierra
+    (where the newest leads live, since pagination is ascending by lead ID).
+    Designed for high-frequency cron runs."""
+    from datetime import datetime
+    start = datetime.now()
+    print(f"[{start:%H:%M:%S}] Starting INCREMENTAL sync (last {num_recent_pages} pages)")
+
+    total_pages = get_sierra_total_pages()
+    print(f"  Sierra reports {total_pages} total pages.")
+    pages_to_check = list(range(max(1, total_pages - num_recent_pages + 1), total_pages + 1))
+    print(f"  Checking pages: {pages_to_check}")
+
+    updated = 0
+    skipped_already_set = 0
+    skipped_no_match = 0
+    skipped_missing_data = 0
+
+    for p in pages_to_check:
+        leads = get_sierra_leads(page=p)
+        for lead in leads:
+            email = lead.get("email")
+            login_url = build_login_url(lead)
+            if not email or not login_url:
+                skipped_missing_data += 1
+                continue
+            person = find_fub_person(email)
+            if not person:
+                skipped_no_match += 1
+                continue
+            if person.get(FUB_CUSTOM_FIELD) == login_url:
+                skipped_already_set += 1
+                continue
+            if update_fub_person(person["id"], login_url, email_for_logs=email):
+                updated += 1
+            time.sleep(SLEEP_BETWEEN_WRITES)
+
+    elapsed = (datetime.now() - start).total_seconds()
+    print(
+        f"\n=== Incremental sync done ===\n"
+        f"Updated: {updated}\n"
+        f"Already set: {skipped_already_set}\n"
+        f"No FUB match: {skipped_no_match}\n"
+        f"Missing data: {skipped_missing_data}\n"
+        f"Elapsed: {int(elapsed//60)}m{int(elapsed%60)}s"
+    )
+
+
 def _fub_request_with_retry(method, url, **kwargs):
     """Make a FUB request with automatic 429 retry (up to 3 attempts)."""
     for attempt in range(3):
@@ -225,8 +285,16 @@ if __name__ == "__main__":
     import sys
     args = sys.argv[1:]
     dry_run = "--dry-run" in args
-    limit = None
-    for a in args:
-        if a.startswith("--limit="):
-            limit = int(a.split("=", 1)[1])
-    sync(limit=limit, dry_run=dry_run)
+    if "--recent" in args:
+        # Incremental mode - just check the last few pages where new leads live
+        pages = 2
+        for a in args:
+            if a.startswith("--recent-pages="):
+                pages = int(a.split("=", 1)[1])
+        sync_recent(num_recent_pages=pages)
+    else:
+        limit = None
+        for a in args:
+            if a.startswith("--limit="):
+                limit = int(a.split("=", 1)[1])
+        sync(limit=limit, dry_run=dry_run)
