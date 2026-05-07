@@ -82,40 +82,60 @@ def build_login_url(lead):
 
 
 def get_sierra_leads(page=1, page_size=100):
-    """Pull a page of leads from Sierra."""
+    """Pull a page of leads from Sierra.
+
+    NOTE: Sierra's API expects 'pageNumber', not 'page'. Using 'page' is
+    silently ignored and always returns page 1.
+    """
     r = requests.get(
         f"{SIERRA_BASE}/leads/find",
         headers=SIERRA_HEADERS,
-        params={"page": page, "pageSize": page_size},
+        params={"pageNumber": page, "pageSize": page_size},
         timeout=30,
     )
     r.raise_for_status()
     return r.json().get("data", {}).get("leads", [])
 
 
+def _fub_request_with_retry(method, url, **kwargs):
+    """Make a FUB request with automatic 429 retry (up to 3 attempts)."""
+    for attempt in range(3):
+        r = requests.request(method, url, auth=(FUB_API_KEY, ""), timeout=30, **kwargs)
+        if r.status_code == 429:
+            wait = int(r.headers.get("Retry-After", 15))
+            print(f"  [429 rate limited, waiting {wait}s before retry {attempt+1}/3]")
+            time.sleep(wait)
+            continue
+        return r
+    return r  # final response, even if still 429
+
+
 def find_fub_person(email):
     """Find a FUB person by email. Returns dict or None."""
-    r = requests.get(
+    r = _fub_request_with_retry(
+        "GET",
         f"{FUB_BASE}/people",
-        auth=(FUB_API_KEY, ""),
         params={"email": email, "fields": "allFields"},
-        timeout=30,
     )
     if r.status_code != 200:
+        print(f"  FUB find failed for {email}: HTTP {r.status_code} {r.text[:120]}")
         return None
     people = r.json().get("people", [])
     return people[0] if people else None
 
 
-def update_fub_person(person_id, login_url):
+def update_fub_person(person_id, login_url, email_for_logs=""):
     """Push the Sierra login URL into the FUB custom field."""
-    r = requests.put(
+    r = _fub_request_with_retry(
+        "PUT",
         f"{FUB_BASE}/people/{person_id}",
-        auth=(FUB_API_KEY, ""),
         json={FUB_CUSTOM_FIELD: login_url},
-        timeout=30,
     )
-    return r.status_code == 200
+    if r.status_code != 200:
+        print(f"  FUB update failed for {email_for_logs} (id={person_id}): "
+              f"HTTP {r.status_code} {r.text[:200]}")
+        return False
+    return True
 
 
 def sync(limit=None, dry_run=False):
@@ -161,7 +181,7 @@ def sync(limit=None, dry_run=False):
                 print(f"[DRY RUN] would set {email} -> {login_url}")
                 updated += 1
             else:
-                if update_fub_person(person["id"], login_url):
+                if update_fub_person(person["id"], login_url, email_for_logs=email):
                     updated += 1
                 time.sleep(SLEEP_BETWEEN_WRITES)
 

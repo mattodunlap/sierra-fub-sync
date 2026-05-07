@@ -47,7 +47,7 @@ def find_sierra_lead_by_email(email):
     r = requests.get(
         f"{SIERRA_BASE}/leads/find",
         headers=SIERRA_HEADERS,
-        params={"email": email, "page": 1, "pageSize": 5},
+        params={"email": email, "pageNumber": 1, "pageSize": 5},
         timeout=15,
     )
     r.raise_for_status()
@@ -101,7 +101,7 @@ def main():
         return
 
     print(f"  Writing to FUB...")
-    ok = update_fub_person(person["id"], login_url)
+    ok = update_fub_person(person["id"], login_url, email_for_logs=email)
     if ok:
         print("  SUCCESS - FUB record updated.")
         print("\n  Now go to FUB, open this contact, and verify the 'Sierra Login URL'")
