@@ -1,0 +1,31 @@
+{
+  "id": 245,
+  "created": "2026-02-02T18:52:21Z",
+  "updated": "2026-02-02T18:52:21Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "9",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"1842\" style=\"border-collapse:   collapse;width:1381pt\"><colgroup><col width=\"1842\" style=\"mso-width-source:userset;mso-width-alt:65479;   width:1381pt\"></colgroup><tbody><tr height=\"19\" style=\"height:14.4pt\"><td height=\"19\" width=\"1842\" style=\"height:14.4pt;width:1381pt\"><div>Hey\n  %contact_first_name%,<br></div><div> <br></div><div> Quick pulse check \u2014 are you still house hunting, or did things\n  change?<br></div><div> <br></div><div> Still looking, already bought, or waiting?<br></div><div> <br></div><div> <br></div><div> Your personal listings:<br></div><div> %custom_ylopo_listing_alert%<br></div><div> <br></div><div> \u2013 Matt and Dre<br></div></td></tr></tbody></table><div><br></div>",
+  "subject": "Re: Just checking in \u2014 still house hunting?",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [],
+  "automations": [
+    {
+      "id": 105,
+      "name": "Dunlap 4 Month Email Re Engage",
+      "createdById": 1,
+      "created": "2026-02-02T18:36:44Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 24,
+      "name": "Dunlap 4 month email re engage"
+    }
+  ]
+}

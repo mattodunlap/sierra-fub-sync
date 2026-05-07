@@ -1,0 +1,46 @@
+{
+  "id": 230,
+  "created": "2025-10-22T20:27:48Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#4",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"2062\" data-end=\"2158\">Hey %contact_first_name%,<br></p><p data-start=\"2160\" data-end=\"2272\">You might be surprised what\u2019s on the market right now \u2014 new listings, better prices, and even some with pools.<br></p><p data-start=\"2274\" data-end=\"2342\"><div>Here\u2019s what\u2019s available today:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div></p><p data-start=\"2344\" data-end=\"2428\">Thinking about picking up your search again? I\u2019d be happy to help you get started.<br></p><div><br></div>",
+  "subject": "Re: Something new might be waiting for you \ud83d\udc40",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

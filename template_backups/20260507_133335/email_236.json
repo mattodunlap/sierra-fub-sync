@@ -1,0 +1,46 @@
+{
+  "id": 236,
+  "created": "2025-10-22T20:31:58Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#10",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"4851\" data-end=\"4963\">Hey %contact_first_name%,<br></p><p data-start=\"4965\" data-end=\"5095\">If your plans, budget, or preferred area have changed, I can quickly update your search so you only see the most relevant homes.<br></p><p data-start=\"5097\" data-end=\"5165\"><div>Here\u2019s your current home list:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div></p><p data-start=\"5167\" data-end=\"5207\">Would you like me to tweak it for you?<br></p><div><br></div>",
+  "subject": "Re: Want me to update your home search, %contact_first_name%?",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": 83,
+  "name": "25",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "Hey %contact_first_name%, take another peek at these homes when you have a sec \ud83d\udc49 %custom_ylopo_listing_alert%\nLet me know what stands out or what\u2019s missing \u2014 I\u2019ll update your search to match your exact wishlist \ud83d\udcac",
+  "isShared": true,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [
+    {
+      "id": 20,
+      "name": "Matt 1st try at website reengagement"
+    }
+  ],
+  "sentPeopleCount": 1,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

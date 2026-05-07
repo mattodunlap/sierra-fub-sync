@@ -1,0 +1,46 @@
+{
+  "id": 235,
+  "created": "2025-10-22T20:31:13Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#9",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"4425\" data-end=\"4522\">Hi %contact_first_name%,<br></p><p data-start=\"4524\" data-end=\"4630\">A lot has changed in the market \u2014 but there are still some incredible homes waiting for the right buyer.<br></p><p data-start=\"4632\" data-end=\"4696\"><div>Take a peek at what\u2019s new:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div></p><p data-start=\"4698\" data-end=\"4780\">If something catches your eye, I can give you the inside scoop before it\u2019s gone.<br></p><div><br></div>",
+  "subject": "Re: Your dream home might still be out there \ud83c\udfe1",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

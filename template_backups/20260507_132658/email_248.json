@@ -1,0 +1,31 @@
+{
+  "id": 248,
+  "created": "2026-02-02T18:54:49Z",
+  "updated": "2026-02-02T18:54:49Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "12",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"1842\" style=\"border-collapse:   collapse;width:1381pt\"><colgroup><col width=\"1842\" style=\"mso-width-source:userset;mso-width-alt:65479;   width:1381pt\"></colgroup><tbody><tr height=\"19\" style=\"height:14.4pt\"><td height=\"19\" width=\"1842\" style=\"height:14.4pt;width:1381pt\"><div>Hey\n  %contact_first_name%,<br></div><div> <br></div><div> Quick question \u2014 has your wish list changed since you first started\n  looking?<br></div><div>  <br></div><div> <br></div><div> See updated matches here:<br></div><div> %custom_ylopo_listing_alert%<br></div><div> <br></div><div> \u2013 Matt<br></div></td></tr></tbody></table><div><br></div>",
+  "subject": "Re: Has your wish list changed?",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [],
+  "automations": [
+    {
+      "id": 105,
+      "name": "Dunlap 4 Month Email Re Engage",
+      "createdById": 1,
+      "created": "2026-02-02T18:36:44Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 24,
+      "name": "Dunlap 4 month email re engage"
+    }
+  ]
+}

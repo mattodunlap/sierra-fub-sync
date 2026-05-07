@@ -1,0 +1,46 @@
+{
+  "id": 229,
+  "created": "2025-10-22T20:27:07Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#3",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"1643\" data-end=\"1812\"><div>Just wanted to check in. Are you still planning to buy in the Las Vegas area?<br></div><div> The market is moving fast, and I\u2019d love to help you spot a great deal before it\u2019s gone.<br></div></p><p data-start=\"1814\" data-end=\"1906\"><div>Here\u2019s your personal link to see what\u2019s available now:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div></p><p data-start=\"1908\" data-end=\"1985\">Would you like me to narrow this to a specific neighborhood or price point?<br></p><div><br></div>",
+  "subject": "Re: Quick question, %contact_first_name% \u2014 are you still searching in Vegas?",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

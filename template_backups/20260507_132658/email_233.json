@@ -1,0 +1,46 @@
+{
+  "id": 233,
+  "created": "2025-10-22T20:29:47Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#7",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"3471\" data-end=\"3568\">Hi %contact_first_name%,<br></p><p data-start=\"3570\" data-end=\"3673\">I noticed it\u2019s been a bit since you\u2019ve checked your saved homes \u2014 want to pick up where you left off?<br></p><p data-start=\"3675\" data-end=\"3743\"><div>Click below to see what\u2019s new:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div></p><p data-start=\"3745\" data-end=\"3832\">If you tell me your ideal area or budget, I\u2019ll make sure your alerts match perfectly.<br></p><div><br></div>",
+  "subject": "Re: Let\u2019s get your home search back on track",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

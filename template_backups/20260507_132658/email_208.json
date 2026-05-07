@@ -1,0 +1,41 @@
+{
+  "id": 208,
+  "created": "2025-10-09T00:04:08Z",
+  "updated": "2025-10-10T00:17:33Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "Buyer DB Re-engagement email #4",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<div>Hi&nbsp;%contact_first_name%,<br></div><div><br></div><div>My site aims to makes it easy to shop Las Vegas and Henderson communities.<br></div><div><br></div><div>Explore established and upcoming communities on my site by visiting:&nbsp;<span id=\"Loading-Preview-Id-embedLink450\"><a href=\"https://www.thevegasagent.com/communities\">https://www.thevegasagent.com/communities</a></span><br></div><div><br></div><div>If you'd like more information on a community, let me know and I'll reach out with some helpful information!<br></div><div><br></div><div>Here is your custom to you home search website,&nbsp;%custom_ylopo_listing_alert%<br></div><div><br></div><div>Happy shopping!<br></div>",
+  "subject": "Explore Communities in the Valley",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 26,
+      "name": "Ylopo+LCA Drip"
+    },
+    {
+      "id": 54,
+      "name": "DB engagement plan"
+    }
+  ],
+  "automations": [
+    {
+      "id": 24,
+      "name": "Ylopo+LCA Drip",
+      "createdById": -1,
+      "created": "2025-07-02T00:54:53Z"
+    },
+    {
+      "id": 49,
+      "name": "DB engagement plan",
+      "createdById": 1,
+      "created": "2025-10-08T23:29:26Z"
+    }
+  ],
+  "categories": []
+}

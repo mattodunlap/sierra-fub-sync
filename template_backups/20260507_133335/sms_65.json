@@ -1,0 +1,19 @@
+{
+  "id": 65,
+  "name": "02",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "Hey %contact_first_name%, what did you like or dislike about these homes we had sent over to look at %custom_ylopo_listing_alert% please let me know your must haves so we can get this dialed in \ud83d\udcaffor you!",
+  "isShared": true,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [],
+  "sentPeopleCount": 672,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

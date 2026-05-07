@@ -1,0 +1,31 @@
+{
+  "id": 254,
+  "created": "2026-03-03T19:26:25Z",
+  "updated": "2026-03-03T19:26:25Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "CHSP - 2",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<div>Hi %contact_first_name%,<br></div><div><br></div><div>Just checking in to see if any homes in your portal stood out to you so far.<br></div><div><br></div><div>Here\u2019s your link again in case you haven\u2019t had a chance to browse: %custom_ylopo_listing_alert%<br></div><div><br></div><div>If you\u2019d like, I can also adjust your search to narrow things down (price range, location, style, etc.). Just let me know :)<br></div><div><br></div><div>Best,<br></div><div><br></div>",
+  "subject": "Let\u2019s find the right home for you",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [],
+  "automations": [
+    {
+      "id": 106,
+      "name": "New Lead - Custom Home Search Portal",
+      "createdById": 1,
+      "created": "2026-03-03T19:32:51Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 17,
+      "name": "Ylopo v2"
+    }
+  ]
+}

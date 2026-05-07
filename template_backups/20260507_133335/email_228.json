@@ -1,0 +1,46 @@
+{
+  "id": 228,
+  "created": "2025-10-22T20:26:07Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#2",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"1049\" data-end=\"1161\">Hey %contact_first_name%,<br></p><p data-start=\"1163\" data-end=\"1289\"><br></p><div>Several new homes just hit the market that fit your search.<br></div><div> Some even have the exact features you were looking for before.<br></div><p><br></p><p data-start=\"1291\" data-end=\"1373\"><br></p><div>Take a look here and tell me what you think:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div><p><br></p><p data-start=\"1375\" data-end=\"1442\">If anything stands out, I can set up a showing for you this week.<br></p><div><br></div>",
+  "subject": "Re: New homes just listed in your search area, %contact_first_name%!",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

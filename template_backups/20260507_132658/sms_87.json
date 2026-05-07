@@ -1,0 +1,24 @@
+{
+  "id": 87,
+  "name": "24F",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "Hey %contact_first_name%, quick question \u2014 are you still looking to buy soon, or just browsing right now?\nHere\u2019s that list again in case you missed it: %custom_ylopo_listing_alert%\n\nEither way\u2019s fine \u2014 I just want to make sure I\u2019m sending the right homes \ud83d\udc4c",
+  "isShared": true,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [
+    {
+      "id": 20,
+      "name": "Matt 1st try at website reengagement"
+    }
+  ],
+  "sentPeopleCount": 0,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

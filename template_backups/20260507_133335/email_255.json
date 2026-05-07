@@ -1,0 +1,31 @@
+{
+  "id": 255,
+  "created": "2026-03-03T19:26:54Z",
+  "updated": "2026-03-03T19:26:54Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "CHSP - 3",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<div>Hi %contact_first_name%,<br></div><div><br></div><div>I recently refined your custom home search portal\u2026it updates in real time with the latest listings that match what you\u2019re looking for. %custom_ylopo_listing_alert%<br></div><div><br></div><div>If any of those are standing out, I\u2019d be happy to send over a quick breakdown: like price trends, neighborhood insights, or how it compares to others nearby.<br></div><div><br></div><div>Sometimes a little extra info makes the decision a whole lot easier. Let me know if that would help!<br></div><div><br></div><div>Best,<br></div><div><br></div>",
+  "subject": "Fine-tuned home search",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [],
+  "automations": [
+    {
+      "id": 106,
+      "name": "New Lead - Custom Home Search Portal",
+      "createdById": 1,
+      "created": "2026-03-03T19:32:51Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 17,
+      "name": "Ylopo v2"
+    }
+  ]
+}

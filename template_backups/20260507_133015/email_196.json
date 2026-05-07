@@ -1,0 +1,31 @@
+{
+  "id": 196,
+  "created": "2025-10-06T20:32:27Z",
+  "updated": "2025-10-09T21:19:59Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "Buyer DB Re-engagement Email #2",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p>Hi&nbsp;%contact_first_name%,<br></p><p>Just checking in \u2014 did you get a chance to look at your updated home search I've been sending? I want to make sure the listings you\u2019re seeing match exactly what you\u2019re looking for.<br></p><p>Here\u2019s your custom home search link again:&nbsp;%custom_ylopo_listing_alert%<br></p><p>If anything needs tweaking, or if your home search plans have changed, just let me know!<br></p><div><br></div><div>Best,<br></div><div><br></div><div><br></div>",
+  "subject": "Home Search Update for %contact_name% follow up \u2013 Dunlap Real Estate",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 54,
+      "name": "DB engagement plan"
+    }
+  ],
+  "automations": [
+    {
+      "id": 49,
+      "name": "DB engagement plan",
+      "createdById": 1,
+      "created": "2025-10-08T23:29:26Z"
+    }
+  ],
+  "categories": []
+}

@@ -1,0 +1,24 @@
+{
+  "id": 70,
+  "name": "Listing alert follow up and link",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "Hey %contact_first_name%, How are things going with you? Were you able to look at the properties we sent yesterday and pick out a few must haves? %custom_ylopo_listing_alert% for easy login to your search, look forward to connecting with you!",
+  "isShared": false,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [
+    {
+      "id": 14,
+      "name": "No answer"
+    }
+  ],
+  "sentPeopleCount": 0,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

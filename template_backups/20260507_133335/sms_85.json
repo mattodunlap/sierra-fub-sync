@@ -1,0 +1,24 @@
+{
+  "id": 85,
+  "name": "22F",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "Hi %contact_first_name%, I wasn\u2019t sure if you had a chance to check out these homes yet \ud83d\udc40 %custom_ylopo_listing_alert%\nAny favorites or dealbreakers? I can adjust your alerts to match what you really want.",
+  "isShared": true,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [
+    {
+      "id": 20,
+      "name": "Matt 1st try at website reengagement"
+    }
+  ],
+  "sentPeopleCount": 78,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

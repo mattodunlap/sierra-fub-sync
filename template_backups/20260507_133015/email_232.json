@@ -1,0 +1,46 @@
+{
+  "id": 232,
+  "created": "2025-10-22T20:29:11Z",
+  "updated": "2025-10-25T02:22:22Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "#6",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<p data-start=\"2995\" data-end=\"3109\">Hey %contact_first_name%,<br></p><p data-start=\"3111\" data-end=\"3252\"><div>Las Vegas inventory looks a lot different than it did a few months ago.<br></div><div> Some neighborhoods are seeing fresh listings and new price drops.<br></div></p><p data-start=\"3254\" data-end=\"3323\"><div>Check out what\u2019s available now:<br></div><div> \ud83d\udc49 [%custom_ylopo_listing_alert%]<br></div></p><p data-start=\"3325\" data-end=\"3396\">If you\u2019re still in the market, I can send you the best options today.<br></p><div><br></div>",
+  "subject": "Re: The market\u2019s changed \u2014the time is now see what\u2019s new, %contact_first_name%",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 65,
+      "name": "ASD 1st attempt at email re engage"
+    },
+    {
+      "id": 66,
+      "name": "ASD 1st attempt at email re engage #2"
+    }
+  ],
+  "automations": [
+    {
+      "id": 71,
+      "name": "ASD 1st attempt at email re engage",
+      "createdById": 1,
+      "created": "2025-10-22T20:38:56Z"
+    },
+    {
+      "id": 102,
+      "name": "2. Email and text Re Engage Plan",
+      "createdById": 1,
+      "created": "2025-11-10T21:18:54Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 19,
+      "name": "Matt 1st Attempt at re engagement of database"
+    }
+  ]
+}

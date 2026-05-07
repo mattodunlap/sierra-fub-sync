@@ -1,0 +1,19 @@
+{
+  "id": 195,
+  "created": "2025-10-06T19:42:54Z",
+  "updated": "2025-10-10T00:15:02Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "Buyer DB Re-engagement email #1 (mass email)",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": true,
+  "body": "<p>Hi %contact_first_name%,<br></p><p>This is %agent_name% with Dunlap Real Estate.. We recently upgraded your home search portal to make it even easier to find listings that match what you\u2019re looking for.<br></p><p>Here\u2019s your updated search link: %custom_ylopo_listing_alert%<br></p><p>Take a look and let me know if the homes you\u2019re seeing still fit your goals \u2014 or if I should adjust your search criteria!<br></p><div>Happy shopping!<br></div>",
+  "subject": "Home Search Update for %contact_name% \u2013 Dunlap Real Estate",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "actionPlans": [],
+  "automations": [],
+  "categories": []
+}

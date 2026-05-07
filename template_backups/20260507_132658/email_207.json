@@ -1,0 +1,41 @@
+{
+  "id": 207,
+  "created": "2025-10-08T23:43:50Z",
+  "updated": "2025-10-10T00:16:41Z",
+  "createdById": 1,
+  "updatedById": 1,
+  "name": "Buyer DB Re-engagement email #3",
+  "imported": 0,
+  "isMobile": 0,
+  "isShared": false,
+  "body": "<div>Hi&nbsp;%contact_first_name%,<br></div><div><br></div><div>Whether you're ready to make a move or just window shopping, being apart of my clientele means being informed and up to date on the latest current home market trends.<br></div><div><br></div><div>I'd like to send you market report that have helped my clients make informed and smart decisions to save BIG when they are ready to make a move. <br></div><div><br></div><div><br></div><div><img src=\"https://s.followupboss.com/public_attachments/c2c7bda0-36a0-4d85-b897-219ecee3c0a5/Screenshot%202025-10-08%20at%206.42.53%E2%80%AFPM.png\" style=\"max-width:100%;\"><br></div><div><br></div><div>Here's an example of the full report: <a href=\"https://www.thevegasagent.com/branded-market-trends?data=eyJhZ2VudERhdGEiOnsiYXNzZXRVcmwiOiJodHRwczovL2ltYWdlcy5zcXVhcmVzcGFjZS1jZG4uY29tL2NvbnRlbnQvdjEvNjdmNWZkNDYyZjRlOTA1YjU0NDcxMzk5LzE3NTIyNDI4MDc3ODItV1BLUE0wTjNROFNaRFZZRTJGWUgvMjQ2Y2I1NjgtNTJjNy00MmQxLThkNmQtODg5Yjc5N2MwMjBhLkpQRyIsIm5hbWUiOiJNYXR0aGV3IER1bmxhcCIsInBob25lIjoiKDQ0MCkgNjY3LTE5NTYiLCJlbWFpbCI6Im1hdHRoZXdAdGVhbWR1bmxhcHJlYWx0eS5jb20iLCJzdWJkb21haW4iOiJtYXR0aGV3LnRoZXZlZ2FzYWdlbnQuY29tIiwiZnVsbFVybCI6Ii90ZWFtL21hdHRoZXctZHVubGFwIn0sIm1hcmtldFRyZW5kc0RhdGEiOnsic2ltcGxlU2VhcmNoQ2l0eSI6IkhlbmRlcnNvbiIsInNpbXBsZVNlYXJjaFN0YXRlIjoiTlYifSwibGlzdGluZ3NEYXRhIjp7ImxvY2F0aW9ucyI6W3siY2l0eSI6IkhlbmRlcnNvbiIsInN0YXRlIjoiTlYifV0sImxpbWl0IjozfSwiYWRkcmVzc0RhdGEiOnsic3RyZWV0TnVtYmVyIjoiIiwic3RyZWV0TmFtZSI6IkxhcyBWZWdhcyBCbHZkIFMiLCJjaXR5IjoiSGVuZGVyc29uIiwic3RhdGUiOiJOViIsInBvc3RhbENvZGUiOiIifSwibWV0YWRhdGEiOnsic2hvdyI6eyJNZWRpYW4gUHJpY2UgUGVyIFNxZnQiOnRydWUsIlRvdGFsIEFjdGl2ZSBMaXN0aW5ncyI6dHJ1ZSwiTWVkaWFuIExpc3QgUHJpY2UiOnRydWUsIk1hcmtldCBBY3Rpb24gSW5kZXgiOnRydWV9LCJsaW5lMSI6IkxhcyBWZWdhcyBCb3VsZXZhcmQgU291dGgsIEhlbmRlcnNvbiwgTlYiLCJsaW5lMiI6IiIsImRlZmF1bHQiOiJNZWRpYW4gTGlzdCBQcmljZSJ9LCJiZ0ltYWdlVXJsIjoiaHR0cHM6Ly9tYXBzLmdvb2dsZWFwaXMuY29tL21hcHMvYXBpL3N0YXRpY21hcD9jZW50ZXI9SGVuZGVyc29uJTIwTlYlMkMlMjAmem9vbT0xMyZzaXplPTE5MjB4MTA4MCZtYXB0eXBlPXJvYWRtYXAmbWFya2Vycz1jb2xvcjpyZWR8bGFiZWw6JTIwfEhlbmRlcnNvbiUyME5WJTJDJTIwJmtleT1BSXphU3lCYkJ5R3gxYlNmaHc2LXBCRjN5UTgtcVNhRHFGZlVFUncifQ==\">Henderson, Las Vegas Market Trends</a><br></div><div><br></div><div>Let me know which area(s) you're interested in seeing and I'll send over your report.<br></div><div><br></div><div>Here is your custom to you home search website,&nbsp;%custom_ylopo_listing_alert%</div><div><br></div><div>Best,<br></div>",
+  "subject": "Exclusive Market Updates for Savvy Home Shopping",
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 26,
+      "name": "Ylopo+LCA Drip"
+    },
+    {
+      "id": 54,
+      "name": "DB engagement plan"
+    }
+  ],
+  "automations": [
+    {
+      "id": 24,
+      "name": "Ylopo+LCA Drip",
+      "createdById": -1,
+      "created": "2025-07-02T00:54:53Z"
+    },
+    {
+      "id": 49,
+      "name": "DB engagement plan",
+      "createdById": 1,
+      "created": "2025-10-08T23:29:26Z"
+    }
+  ],
+  "categories": []
+}

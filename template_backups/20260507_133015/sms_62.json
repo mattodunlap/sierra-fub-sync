@@ -1,0 +1,24 @@
+{
+  "id": 62,
+  "name": "01",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "%greeting_time% %contact_first_name%, found some homes I thought you may be interested in.  %custom_ylopo_listing_alert% Care to tour any of these in the next couple of days?  Let me know!  Have the best day!  %agent_name%",
+  "isShared": true,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [
+    {
+      "id": 7,
+      "name": "Push Listings"
+    }
+  ],
+  "sentPeopleCount": 44,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

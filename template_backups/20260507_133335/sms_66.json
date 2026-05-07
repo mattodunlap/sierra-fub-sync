@@ -1,0 +1,19 @@
+{
+  "id": 66,
+  "name": "02-Follow Up",
+  "totalSent": 0,
+  "totalReplies": 0,
+  "message": "Hey %contact_first_name%, How are things going with you?  Were you able to look at the properties we sent yesterday and pick out a few must haves?  %custom_ylopo_listing_alert% for easy login to your search, look forward to connecting with you!",
+  "isShared": true,
+  "createdBy": 1,
+  "isEditable": true,
+  "isShareable": true,
+  "isDeletable": true,
+  "categories": [],
+  "sentPeopleCount": 1115,
+  "effectivenessScore": null,
+  "windowedSent": 0,
+  "windowedReplies": 0,
+  "windowedOptOutRate": null,
+  "totalOptOutRate": null
+}

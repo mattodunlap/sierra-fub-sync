@@ -1,0 +1,36 @@
+{
+  "id": 173,
+  "created": "2025-07-02T00:54:56Z",
+  "updated": "2025-10-22T20:12:57Z",
+  "createdById": -1,
+  "updatedById": 1,
+  "name": "New Drip Campaign Email 3",
+  "imported": 1,
+  "isMobile": 0,
+  "isShared": true,
+  "body": "<div>Hi %contact_first_name%,<br></div><div><br></div><div>I\u2019m always interested in what has someone shopping for a home. Are<br></div><div>you moving to the %contact_city% area? Or maybe just looking for a<br></div><div>larger home?<br></div><div><br></div><div>I\u2019ll try to send some info your way to make this process breezy for you.<br></div><div>Just let me know your goals.&nbsp;%custom_ylopo_listing_alert% are some you might like!<br></div><div><br></div><div><br></div><div>Best,<br></div>",
+  "subject": "Moving Here? New Job? Upgrading? Downsizing?",
+  "isEditable": true,
+  "isShareable": "disabled",
+  "isDeletable": false,
+  "actionPlans": [
+    {
+      "id": 37,
+      "name": "Professor Barry Ylopo 2.0 Buyer"
+    }
+  ],
+  "automations": [
+    {
+      "id": 97,
+      "name": "Professor Barry Ylopo 2.0 Buyer",
+      "createdById": -1,
+      "created": "2025-07-02T00:54:56Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 5,
+      "name": "Ylopo"
+    }
+  ]
+}
