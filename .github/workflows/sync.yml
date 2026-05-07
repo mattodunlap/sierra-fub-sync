@@ -1,0 +1,27 @@
+name: Sierra-FUB Sync
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes
+  workflow_dispatch:           # manual trigger button in Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run sync
+        env:
+          SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+          SIERRA_LOGIN_FIELD: ${{ secrets.SIERRA_LOGIN_FIELD }}
+          FUB_CUSTOM_FIELD: ${{ secrets.FUB_CUSTOM_FIELD }}
+        run: python sierra_fub_sync.py

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sierra-fub-webhook
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn webhook_handler:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SIERRA_API_KEY
+        sync: false
+      - key: FUB_API_KEY
+        sync: false
+      - key: FUB_CUSTOM_FIELD
+        value: customSierraLoginURL
+      - key: SIERRA_ORIGINATING_SYSTEM
+        value: FUB-AutoLogin-Sync
+      - key: WEBHOOK_SECRET
+        sync: false
