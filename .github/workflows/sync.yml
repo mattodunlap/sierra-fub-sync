@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run incremental sync
+      - name: Run incremental URL sync
         env:
           SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
@@ -27,3 +27,10 @@ jobs:
           FUB_CUSTOM_FIELD: ${{ secrets.FUB_CUSTOM_FIELD }}
           SIERRA_ORIGINATING_SYSTEM: ${{ secrets.SIERRA_ORIGINATING_SYSTEM }}
         run: python sierra_fub_sync.py --recent --recent-pages=2
+
+      - name: Push tags from Sierra to FUB
+        env:
+          SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+          SIERRA_ORIGINATING_SYSTEM: ${{ secrets.SIERRA_ORIGINATING_SYSTEM }}
+        run: python push_tags_batch.py --write
