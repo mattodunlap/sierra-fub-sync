@@ -1,0 +1,47 @@
+
+======================================================================
+Step 1: Get a sample recent lead
+======================================================================
+Total pages: 10388
+Using sample lead id=10306749
+
+======================================================================
+Step 2: Full lead detail - look for tag-shaped fields
+======================================================================
+Top-level keys: ['id', 'firstName', 'lastName', 'leadStatus', 'listingAgentStatus', 'lenderStatus', 'email', 'emailStatus', 'phone', 'phoneStatus', 'leadType', 'assignedTo', 'listingAgent', 'lender', 'creationDate', 'updateDate', 'source', 'marketingEmailOptOut', 'textOptOut', 'eAlertOptOut', 'streetAddress', 'city', 'state', 'zip', 'shortSummary', 'pondId', 'visits']
+
+======================================================================
+Step 3: Probe lead-tag subendpoints
+======================================================================
+  FAIL GET /leads/get/10306749/tags                                     -> 404  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xht
+  FAIL GET /leads/10306749/tags                                         -> 404  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xht
+  FAIL GET /leads/tags/10306749                                         -> 404  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xht
+  FAIL GET /tags/10306749                                               -> 404  {"success":false,"errorMessage":"No HTTP resource was found that matches the request URI"}
+  OK GET /leadTags/10306749                                           -> 200  {"success":true,"data":{"totalRecords":687,"totalPages":7,"pageNumber":1,"pageSize":100,"records":[{"id":551008,"name":"[B] Appointment Set","descript
+  FAIL GET /lead-tags?leadId=10306749                                   -> 404  {"success":false,"errorMessage":"No HTTP resource was found that matches the request URI"}
+
+======================================================================
+Step 4: Probe global tag endpoints
+======================================================================
+  FAIL GET /tags                          -> 404  {"success":false,"errorMessage":"No HTTP resource was found that matches the request URI"}
+  FAIL GET /tags/list                     -> 404  {"success":false,"errorMessage":"No HTTP resource was found that matches the request URI"}
+  OK GET /leadTags                      -> 200  {"success":true,"data":{"totalRecords":687,"totalPages":7,"pageNumber":1,"pageSize":100,"records":[{"id":551008,"name":"[B] Appointment Set","description":""},{"id":551032,"name":"120232265431020343",
+  FAIL GET /lead-tags                     -> 404  {"success":false,"errorMessage":"No HTTP resource was found that matches the request URI"}
+  FAIL GET /tag/list                      -> 404  {"success":false,"errorMessage":"No HTTP resource was found that matches the request URI"}
+
+======================================================================
+Step 5: Probe /leads/find filter params for tags
+======================================================================
+  ('tag', 'S Priority') -> totalRecords=10388 firstLead=2443063
+  ('tags', 'S Priority') -> totalRecords=97 firstLead=2443203
+  ('tagName', 'S Priority') -> totalRecords=10388 firstLead=2443063
+  ('leadTag', 'S Priority') -> totalRecords=10388 firstLead=2443063
+  ('category', 'S Priority') -> totalRecords=10388 firstLead=2443063
+
+======================================================================
+DONE
+======================================================================
+Look at what worked above. The tag location is likely:
+  - A field on lead detail you didn't notice (re-scan Step 2 carefully)
+  - A subendpoint that returned 200 in Step 3
+  - A filter param that returned > 0 totalRecords in Step 5

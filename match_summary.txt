@@ -1,0 +1,14 @@
+============================================================
+SUMMARY  (LIVE)
+Tag: 'Needs Sierra URL'
+Run timestamp: 2026-05-07 21:44:39
+============================================================
+  Total tagged contacts: 1958
+  Matched by email:      90
+  Matched by phone:      23
+  Generic fallback used: 1841
+  Already had URL:       0
+  No email or phone:     4
+  Could not match:       1841
+  Successfully updated:  1954
+  Write failed:          0

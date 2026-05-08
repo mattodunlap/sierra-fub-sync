@@ -1,0 +1,43 @@
+======================================================================
+Approach 1: FUB /people?tags=S Priority
+======================================================================
+
+Found 45 contacts via FUB tags filter.
+
+======================================================================
+Approach 2: Sample 5 contacts - show raw tags array as returned by FUB
+======================================================================
+
+Antoine Gibson (id=15787):
+  raw tags: ['Import', 'Bad Number', 'SELLER', 'SELLER_IMPORTED', 'Imported Agent: Matthew Dunlap', 'FELLO MARKETING CONTACT', 'Google Adwords PPC', 'Lead has Never Responded', 'Phone-Landline', 'PRESENT IN FELLO', 'Present in Sierra', 'Sierra PPC', 'Arrived in New', 'Arrived in Qualify', 'First Call Never Made', 'Email Status changed to Valid Email', 'ENRICH', 'First Call Made', 'Henderson', 'No Answer', 'Lead Responds to Text', 'Unsubscribed from Text Messaging', 'Include in Fello 3/23/2025', 'Las Vegas', 'AI Lead Engage-Stop', 'OUT OF STATE', 'First Connected Call', 'Phone Status changed to Talking to Prospect', 'Fello Tier 2', 'Lead Responds to Email', 'Arrived in Active', 'Last Call Outcome: Talked to Lead', 'Arrived in Junk', 'Exclude From Fello 3/23/2025', 'las vegas strip view homes for sale', 'Y_IMPORT_WITH_DEFAULT_SEARCH', 'junk import 9/4/2025', 'Bounced', '89044', 'FIX YLOPO SEARCH TO DAILY', 'Last Call Outcome: Call Attempt, No Answer', 'Opted Out - Texts', 'Sierra Active Status 4/21/2026', 'S Priority']
+  priority-ish tags: ['S Priority']
+
+Bob Jones (id=15666):
+  raw tags: ['Import', 'LISTING_ALERT_UNSUB', 'Ylopo_Reactivated', 'SELLER_IMPORTED', '89143', 'Imported Agent: Matthew Dunlap', 'FELLO MARKETING CONTACT', 'Google Adwords PPC', 'las vegas homes with pools', 'Lead has Never Responded', 'PRESENT IN FELLO', 'Present in Sierra', 'Sierra PPC', 'Arrived in New', 'Arrived in Qualify', 'ENRICH', 'No Answer', 'Phone-Mobile', 'Include in Fello 3/23/2025', 'Las Vegas', 'houses for sale in las vegas with pool', 'Fello Tier 2', 'Sly DIal', 'FELLO INVESTIGATE', 'Fello-Investigate-Non Match', 'qualify lead import 9/4/2025', 'Imported Stage: Lead', 'ASD Plan Applied', 'Dunlap Re Engage Applied', 'FIX YLOPO SEARCH TO DAILY', 'Last Call Outcome: Call Attempt, No Answer', 'Sierra to Fub Qualify text list 4/22/2026', '4/27/2026 Adrianne Call List', 'S Priority']
+  priority-ish tags: ['S Priority']
+
+Caroline Finney (id=15604):
+  raw tags: ['Import', 'SELLER', 'Ylopo_Reactivated', 'SELLER_IMPORTED', '89074', 'Imported Agent: Matthew Dunlap', 'FELLO MARKETING CONTACT', 'Google Adwords PPC', 'Lead has Never Responded', 'PRESENT IN FELLO', 'Present in Sierra', 'Sierra PPC', 'Arrived in New', 'Arrived in Qualify', 'ENRICH', 'Henderson', 'No Answer', 'Phone-Mobile', 'Include in Fello 3/23/2025', 'OUT OF STATE', 'Fello Tier 2', 'Sly DIal', 'houses for sale in henderson nv', 'qualify lead import 9/4/2025', '89052', '89014', 'Dunlap Re Engage Applied', 'FIX YLOPO SEARCH TO DAILY', 'Last Call Outcome: Call Attempt, No Answer', 'Sierra to Fub Qualify text list 4/22/2026', '4/27/2026 Adrianne Call List', 'S Priority']
+  priority-ish tags: ['S Priority']
+
+Christina Thompson (id=15524):
+  raw tags: ['Import', 'RETURNED', 'SELLER', 'Ylopo_Reactivated', 'SELLER_IMPORTED', '89102', 'Imported Agent: Matthew Dunlap', 'FELLO MARKETING CONTACT', 'Google Adwords PPC', 'las vegas homes with pools', 'Lead has Never Responded', 'PRESENT IN FELLO', 'Present in Sierra', 'Sierra PPC', 'Arrived in New', 'ENRICH', 'Henderson', 'No Answer', 'Include in Fello 3/23/2025', 'Las Vegas', 'OUT OF STATE', 'First Connected Call', 'Fello Tier 2', 'Arrived in Active', 'Last Call Outcome: Talked to Lead', 'Joe Cordone', 'LISTING_ALERT_SUNSET', 'Bounced', '89052', 'ASD Plan Applied', 'Dunlap Re Engage Applied', 'FIX YLOPO SEARCH TO DAILY', 'Spring Break Hot LIst', 'Last Call Outcome: Call Attempt, No Answer', 'Sierra Active Status 4/21/2026', '4/2704/27/2026 Matthew Call List', 'S Priority']
+  priority-ish tags: ['S Priority']
+
+Claudia Ramirez (id=15518):
+  raw tags: ['Import', 'SELLER', 'Ylopo_Reactivated', 'SELLER_IMPORTED', 'Imported Agent: Matthew Dunlap', 'FELLO MARKETING CONTACT', 'PRESENT IN FELLO', 'Present in Sierra', 'Arrived in Qualify', 'ENRICH', 'First Call Made', 'No Answer', 'Lead Responds to Text', 'Include in Fello 3/23/2025', 'Las Vegas', 'First Connected Call', 'Phone Status changed to Talking to Prospect', 'Fello Tier 2', 'Damian Import 1', 'Lead Responds to Phone', 'Arrived in Active', 'Lead has Requested More Information', 'Lead has Scheduled a Showing Request', 'Imported Agent: Adrianne Dunlap', '89166', 'ASD Plan Applied', 'Nevada Home Owners', 'Imported Stage: C - Cold 6+ Months', 'Dunlap Re Engage', 'Dunlap Re Engage Applied', 'FIX YLOPO SEARCH TO DAILY', 'Last Call Outcome: Call Attempt, No Answer', 'Sierra Active Status 4/21/2026', 'S Priority']
+  priority-ish tags: ['S Priority']
+
+======================================================================
+Approach 3: First 5 contact emails from FUB tag filter
+======================================================================
+  id=15787 Antoine Gibson <mndthornhill@gmail.com>
+  id=15666 Bob Jones <taiykingi@gmail.com>
+  id=15604 Caroline Finney <ckfinney44@yahoo.com>
+  id=15524 Christina Thompson <christinathompson97@yahoo.com>
+  id=15518 Claudia Ramirez <claudiaramirez253@gmail.com>
+  id=15298 Elliot Rovinsky <rovaiser@cox.net>
+  id=15261 Frannie Roca <frannie.roca@gmail.com>
+  id=15211 Hector Nava <hmnava6@gmail.com>
+  id=15124 Jaimee Ingram <jaimee.jf@gmail.com>
+  id=15068 Jenn Platzek <jennplatzek@gmail.com>

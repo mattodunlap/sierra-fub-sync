@@ -1,0 +1,19 @@
+Searching Sierra for 'jnikolaus36@gmail.com'...
+Found: id=4988199 Joan Nikolaus <jnikolaus36@gmail.com>
+  Created: 2023-03-12T20:35:41
+  Updated: 2026-05-08T16:30:22.3704099Z
+
+Pulling full lead detail...
+Detail keys: ['id', 'firstName', 'lastName', 'leadStatus', 'listingAgentStatus', 'lenderStatus', 'email', 'emailStatus', 'phone', 'phoneStatus', 'leadType', 'assignedTo', 'listingAgent', 'lender', 'searchPreference', 'creationDate', 'updateDate', 'source', 'marketingEmailOptOut', 'textOptOut', 'eAlertOptOut', 'partnerLink', 'streetAddress', 'city', 'state', 'zip', 'shortSummary', 'pondId', 'visits']
+
+Note: Sierra lead detail does NOT include a tags field.
+Tags are only accessible via the /leads/find?tags= filter.
+
+======================================================================
+Checking if SPRIORITY filter includes this lead...
+======================================================================
+  YES - jnikolaus36@gmail.com IS in the SPRIORITY filter results (page 1, total scanned 98).
+  Indexing is up-to-date for this lead.
+
+Also checking 'S Priority' filter (the old tag name)...
+  Lead in 'S Priority' filter? False (filter has 1 total)

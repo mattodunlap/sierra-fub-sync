@@ -1,0 +1,35 @@
+Pulling all Sierra lead tag definitions...
+Got 687 tag definitions.
+
+Found 6 tag(s) containing 'priority':
+
+  id=536733  name='PriorityPondCheck'  description=''
+  id=551122  name='S Priority'  description=''
+  id=551117  name='SPRIORITY'  description=''
+  id=536774  name='Y_AI_PRIORITY'  description=''
+  id=536775  name='YPRIORITY'  description=''
+  id=536708  name='YPRIORITY_OPT_OUT'  description=''
+
+======================================================================
+Lead count via /leads/find?tags=<name> for each priority tag
+======================================================================
+  'PriorityPondCheck'                      -> 101 leads
+  'S Priority'                             -> 1 leads
+  'SPRIORITY'                              -> 98 leads
+  'Y_AI_PRIORITY'                          -> 4 leads
+  'YPRIORITY'                              -> 13 leads
+  'YPRIORITY_OPT_OUT'                      -> 21 leads
+
+======================================================================
+Variations on SPRIORITY
+======================================================================
+  'SPRIORITY'               -> 98 leads
+  'Spriority'               -> 98 leads
+  'spriority'               -> 98 leads
+  'sPriority'               -> 98 leads
+  ' SPRIORITY'              -> 0 leads
+  'SPRIORITY '              -> 98 leads
+  'S Priority'              -> 1 leads
+  'S priority'              -> 1 leads
+  'S-Priority'              -> 0 leads
+  'S_Priority'              -> 0 leads
