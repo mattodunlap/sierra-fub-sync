@@ -1,0 +1,25 @@
+name: Push Tags Sierra to FUB
+on:
+  schedule:
+    - cron: "0 * * * *"    # every hour, on the hour
+  workflow_dispatch:
+concurrency:
+  group: push-tags
+  cancel-in-progress: false
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests
+      - name: Push tags from Sierra to FUB
+        env:
+          SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+          SIERRA_ORIGINATING_SYSTEM: ${{ secrets.SIERRA_ORIGINATING_SYSTEM }}
+        run: python push_tags_batch.py --write
