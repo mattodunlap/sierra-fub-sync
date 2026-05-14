@@ -1,24 +1,19 @@
 name: Sierra-FUB Sync
-
 on:
   schedule:
     - cron: "*/5 * * * *"    # every 5 minutes
-  workflow_dispatch:           # manual trigger button in Actions tab
-
+  workflow_dispatch:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 4         # safety: kill any run that overlaps the next
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install dependencies
         run: pip install requests
-
       - name: Run incremental URL sync
         env:
           SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
@@ -27,10 +22,3 @@ jobs:
           FUB_CUSTOM_FIELD: ${{ secrets.FUB_CUSTOM_FIELD }}
           SIERRA_ORIGINATING_SYSTEM: ${{ secrets.SIERRA_ORIGINATING_SYSTEM }}
         run: python sierra_fub_sync.py --recent --recent-pages=2
-
-      - name: Push tags from Sierra to FUB
-        env:
-          SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
-          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
-          SIERRA_ORIGINATING_SYSTEM: ${{ secrets.SIERRA_ORIGINATING_SYSTEM }}
-        run: python push_tags_batch.py --write
