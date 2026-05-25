@@ -60,9 +60,6 @@ def extract_text(content):
             tc = block.get("content")
             tc_text = extract_text(tc) if not isinstance(tc, str) else tc
             if tc_text:
-                # Truncate enormous tool outputs to keep markdown readable
-                if len(tc_text) > 4000:
-                    tc_text = tc_text[:4000] + f"\n\n... [truncated, {len(tc_text)} chars total]"
                 parts.append(f"**tool_result**\n```\n{tc_text}\n```")
         elif btype == "image":
             parts.append("*(image omitted)*")
