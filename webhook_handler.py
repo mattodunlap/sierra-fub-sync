@@ -139,17 +139,20 @@ def find_fub_person(email):
 
 def create_fub_person(email, first_name, last_name, login_url,
                        agent_url=None, search_url=None, admin_url=None):
-    """If the contact doesn't exist in FUB yet, create them with all URLs set."""
+    """Field consolidation 2026-05-28 per Matthew: only customSierraSearchURL
+    (filtered auto-login) and customSierraAdminURL (agent jump-in) are kept.
+    Legacy login_url and agent_url params accepted but no longer written."""
     payload = {
         "emails": [{"value": email}],
         "firstName": first_name or "",
         "lastName": last_name or "",
         "source": "Sierra Interactive",
-        FUB_CUSTOM_FIELD: login_url,
     }
-    if agent_url:  payload[FUB_AGENT_LINK_FIELD] = agent_url
-    if search_url: payload[FUB_SEARCH_URL_FIELD] = search_url
-    if admin_url:  payload[FUB_ADMIN_URL_FIELD]  = admin_url
+    # Use the filtered search URL as the primary lead-facing link.
+    # If no filtered search exists yet, fall back to login_url so the lead
+    # still has SOME URL on their record.
+    payload[FUB_SEARCH_URL_FIELD] = search_url or login_url or ''
+    if admin_url:  payload[FUB_ADMIN_URL_FIELD] = admin_url
     r = requests.post(
         f"{FUB_BASE}/people",
         auth=(FUB_API_KEY, ""),
@@ -161,10 +164,10 @@ def create_fub_person(email, first_name, last_name, login_url,
 
 def update_fub_person(person_id, login_url, agent_url=None,
                       search_url=None, admin_url=None):
-    fields = {FUB_CUSTOM_FIELD: login_url}
-    if agent_url:  fields[FUB_AGENT_LINK_FIELD] = agent_url
-    if search_url: fields[FUB_SEARCH_URL_FIELD] = search_url
-    if admin_url:  fields[FUB_ADMIN_URL_FIELD]  = admin_url
+    """Field consolidation 2026-05-28: write only the 2 keeper fields."""
+    fields = {}
+    fields[FUB_SEARCH_URL_FIELD] = search_url or login_url or ''
+    if admin_url: fields[FUB_ADMIN_URL_FIELD] = admin_url
     r = requests.put(
         f"{FUB_BASE}/people/{person_id}",
         auth=(FUB_API_KEY, ""),
