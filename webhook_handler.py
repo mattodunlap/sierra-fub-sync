@@ -48,10 +48,22 @@ AGENT_SUBDOMAINS = {
 DEFAULT_SUBDOMAIN = "www"
 SITE_DOMAIN = "thevegasagent.com"
 
+# Agent-jump-in URL — for Matthew/Adrianne to land in a client's Sierra
+# admin portal in one click. Distinct from client-side auto-login URL.
+SIERRA_ADMIN_BASE = "https://client3.sierrainteractivedev.com/lead-detail.aspx"
+FUB_AGENT_LINK_FIELD = "customSierraAgentLoginLink"
+
+# Filtered saved-search URL (the per-search deep-link used in emails so the
+# lead lands on THEIR list, not the homepage). Populated if Sierra returns a
+# primary savedSearchId for the lead. Field added 2026-05-27.
+FUB_SEARCH_URL_FIELD = "customSierraSearchURL"
+FUB_ADMIN_URL_FIELD  = "customSierraAdminURL"
+
 app = FastAPI()
 
 
 def build_login_url(lead):
+    """Client-side auto-login URL → drops them on thevegasagent.com homepage."""
     assigned = lead.get("assignedTo") or {}
     first_name = (assigned.get("agentUserFirstName") or "").lower().strip()
     subdomain = AGENT_SUBDOMAINS.get(first_name, DEFAULT_SUBDOMAIN)
@@ -59,6 +71,43 @@ def build_login_url(lead):
     if not lead_id:
         return None
     return f"https://{subdomain}.{SITE_DOMAIN}/?userid={lead_id}&sentfrom=auto"
+
+
+def build_agent_login_url(lead):
+    """Agent-jump-in URL → Matthew/Adrianne click into the lead's Sierra admin portal."""
+    lead_id = lead.get("id")
+    if not lead_id:
+        return None
+    return f"{SIERRA_ADMIN_BASE}?id={lead_id}"
+
+
+def build_search_url(lead):
+    """Filtered saved-search deep-link. Queries Sierra for the lead's primary
+    saved search; returns None if they have none yet."""
+    lead_id = lead.get("id")
+    if not lead_id:
+        return None
+    try:
+        r = requests.get(f"{SIERRA_BASE}/savedSearches/find",
+                         headers=SIERRA_HEADERS,
+                         params={"leadId": lead_id}, timeout=10)
+        if r.status_code != 200:
+            return None
+        data = r.json().get("data", {})
+        searches = data.get("savedSearches", []) if isinstance(data, dict) else []
+        if not searches:
+            return None
+        search_id = searches[0].get("searchId")
+        if not search_id:
+            return None
+        # Match the URL shape send_1000_morning expects (searchtype=2&searchid=N)
+        assigned = lead.get("assignedTo") or {}
+        first_name = (assigned.get("agentUserFirstName") or "").lower().strip()
+        subdomain = AGENT_SUBDOMAINS.get(first_name, DEFAULT_SUBDOMAIN)
+        return (f"https://{subdomain}.{SITE_DOMAIN}/property-search/results/"
+                f"?searchtype=2&searchid={search_id}&userid={lead_id}&sentfrom=auto")
+    except Exception:
+        return None
 
 
 def get_sierra_lead(lead_id):
@@ -88,8 +137,9 @@ def find_fub_person(email):
     return people[0] if people else None
 
 
-def create_fub_person(email, first_name, last_name, login_url):
-    """If the contact doesn't exist in FUB yet, create them with the URL set."""
+def create_fub_person(email, first_name, last_name, login_url,
+                       agent_url=None, search_url=None, admin_url=None):
+    """If the contact doesn't exist in FUB yet, create them with all URLs set."""
     payload = {
         "emails": [{"value": email}],
         "firstName": first_name or "",
@@ -97,6 +147,9 @@ def create_fub_person(email, first_name, last_name, login_url):
         "source": "Sierra Interactive",
         FUB_CUSTOM_FIELD: login_url,
     }
+    if agent_url:  payload[FUB_AGENT_LINK_FIELD] = agent_url
+    if search_url: payload[FUB_SEARCH_URL_FIELD] = search_url
+    if admin_url:  payload[FUB_ADMIN_URL_FIELD]  = admin_url
     r = requests.post(
         f"{FUB_BASE}/people",
         auth=(FUB_API_KEY, ""),
@@ -106,11 +159,16 @@ def create_fub_person(email, first_name, last_name, login_url):
     return r.status_code in (200, 201)
 
 
-def update_fub_person(person_id, login_url):
+def update_fub_person(person_id, login_url, agent_url=None,
+                      search_url=None, admin_url=None):
+    fields = {FUB_CUSTOM_FIELD: login_url}
+    if agent_url:  fields[FUB_AGENT_LINK_FIELD] = agent_url
+    if search_url: fields[FUB_SEARCH_URL_FIELD] = search_url
+    if admin_url:  fields[FUB_ADMIN_URL_FIELD]  = admin_url
     r = requests.put(
         f"{FUB_BASE}/people/{person_id}",
         auth=(FUB_API_KEY, ""),
-        json={FUB_CUSTOM_FIELD: login_url},
+        json=fields,
         timeout=15,
     )
     return r.status_code == 200
@@ -139,20 +197,30 @@ async def sierra_webhook(request: Request):
 
     lead = get_sierra_lead(lead_id)
     email = lead.get("email")
-    login_url = build_login_url(lead)
+    login_url  = build_login_url(lead)
+    agent_url  = build_agent_login_url(lead)
+    search_url = build_search_url(lead)
+    admin_url  = f"{SIERRA_ADMIN_BASE}?id={lead_id}"
 
     if not email or not login_url:
         return {"ignored": "missing email or login url", "lead_id": lead_id}
 
     person = find_fub_person(email)
     if person:
-        ok = update_fub_person(person["id"], login_url)
-        return {"action": "updated", "ok": ok, "person_id": person["id"]}
+        ok = update_fub_person(person["id"], login_url,
+                                agent_url=agent_url, search_url=search_url,
+                                admin_url=admin_url)
+        return {"action": "updated", "ok": ok, "person_id": person["id"],
+                "wrote_search_url": bool(search_url)}
     else:
         ok = create_fub_person(
             email=email,
             first_name=lead.get("firstName"),
             last_name=lead.get("lastName"),
             login_url=login_url,
+            agent_url=agent_url,
+            search_url=search_url,
+            admin_url=admin_url,
         )
-        return {"action": "created", "ok": ok}
+        return {"action": "created", "ok": ok,
+                "wrote_search_url": bool(search_url)}
