@@ -43,7 +43,7 @@ _load_env_file()
 
 SIERRA_API_KEY = os.environ["SIERRA_API_KEY"]
 FUB_API_KEY = os.environ["FUB_API_KEY"]
-FUB_CUSTOM_FIELD = os.environ.get("FUB_CUSTOM_FIELD", "customSierraLoginURL")
+FUB_CUSTOM_FIELD = os.environ.get("FUB_CUSTOM_FIELD", "customSierraSearchURL")
 SIERRA_ORIGINATING_SYSTEM = os.environ.get(
     "SIERRA_ORIGINATING_SYSTEM", "FUB-AutoLogin-Sync"
 )
