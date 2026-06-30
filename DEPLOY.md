@@ -197,6 +197,77 @@ codes and reads noisily. For a clean conversation transcript, use Claude Code's
 own structured session history under `~/.claude/` (per-project `.jsonl` files)
 instead.
 
+### Spinning up a NEW always-on Claude node (zero-auth-hassle)
+
+`scripts/setup-droplet-node.sh` turns a fresh Ubuntu droplet into a permanent,
+always-on Claude node where popping in later takes two taps and no auth dance.
+It installs Node + Claude Code + tmux + Tailscale, enables **Tailscale SSH**, and
+sets up the self-restarting `claude-session` service, logging, and a `cc` alias.
+
+The "no auth hour" comes from eliminating both sources of friction:
+
+1. **SSH login** — Tailscale SSH (`tailscale up --ssh`) lets you SSH in by your
+   tailnet identity. No SSH keys to generate or copy, no passwords.
+2. **Claude login** — you log in once; credentials persist in `~/.claude` and
+   auto-refresh, so reboots and self-restarts keep you authenticated.
+
+#### Steps
+
+1. **Create the droplet** (DigitalOcean → Create → Droplets): Ubuntu LTS, the
+   smallest size is fine. Or with `doctl`:
+   ```bash
+   doctl compute droplet create claude-node \
+     --image ubuntu-24-04-x64 --size s-1vcpu-1gb --region nyc1 \
+     --ssh-keys <your-key-fingerprint> --wait
+   ```
+
+2. **Generate a Tailscale auth key** at
+   https://login.tailscale.com/admin/settings/keys → **Generate auth key**.
+   Make it **Reusable** and leave **Ephemeral OFF** (the droplet is permanent, so
+   it should stay a stable node).
+
+3. **Run the bootstrap** on the new droplet (copy the script over or paste it):
+   ```bash
+   sudo bash setup-droplet-node.sh <TAILSCALE_AUTHKEY> claude-node
+   ```
+
+4. **Authenticate Claude once:**
+   ```bash
+   ssh root@claude-node     # Tailscale SSH; works once the node joined
+   cc                       # attach to the live session
+   # complete the Claude login prompt
+   ```
+   That's the only interactive auth you'll do.
+
+5. **Every time after:** `ssh root@claude-node` then `cc`. On iOS, save the host
+   with "command on connect" = `tmux attach -t claude || tmux new -s claude`.
+
+#### Make Tailscale SSH frictionless (one ACL tweak)
+
+By default, Tailscale SSH uses `check` mode, which re-prompts for browser
+re-auth every ~12h. To avoid that on your own devices, edit your tailnet ACLs
+(https://login.tailscale.com/admin/acls) so the SSH rule uses `accept` and
+allows `root`:
+
+```jsonc
+"ssh": [
+  {
+    "action": "accept",                 // not "check" -> no periodic re-auth
+    "src":    ["autogroup:member"],
+    "dst":    ["autogroup:self"],
+    "users":  ["autogroup:nonroot", "root"]
+  }
+]
+```
+
+#### Optional: skip even the first Claude login
+
+To avoid the one-time interactive login, pre-load credentials from an
+already-authenticated machine (the same idea as the `claude-creds-push` setup on
+the original droplet): copy `~/.claude/.credentials.json` onto the new node at
+`/root/.claude/.credentials.json` before starting the service. Keep them fresh
+with a small timer if your tokens rotate.
+
 ## Troubleshooting
 
 **Render service shows "Application failed to respond"**: usually a missing env var. Check the Render logs tab.
