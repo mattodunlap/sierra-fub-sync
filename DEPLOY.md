@@ -93,6 +93,230 @@ After deploying, verify:
 - [ ] Sierra webhook test fires correctly (check Render logs for incoming requests)
 - [ ] FUB email template merge tag resolves to the correct URL when sent
 
+## Accessing Claude Code on the droplet (from phone or computer)
+
+The droplet runs an always-on Claude Code session inside `tmux` so you can attach
+to it from any device on your Tailscale network (phone, laptop) and have it
+survive disconnects, crashes, and reboots.
+
+### Network
+
+The droplet is reachable at its Tailscale address `100.96.93.82`. Every device
+that connects must have Tailscale installed and signed into the **same** account,
+with the VPN toggled **on**. This keeps the droplet off the public internet — no
+port forwarding required.
+
+### Permanent, self-restarting session (one-time setup on the droplet)
+
+Confirm the binary paths first:
+
+```bash
+which tmux && which claude
+```
+
+Create a systemd service that keeps a `tmux` session named `claude` alive:
+
+```bash
+cat > /etc/systemd/system/claude-session.service <<'EOF'
+[Unit]
+Description=Persistent self-restarting Claude Code session in tmux
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/root
+# login shell (-l) loads PATH so `claude` resolves; while-loop relaunches it if it ever exits
+ExecStart=/bin/bash -lc "tmux new-session -d -s claude 'while true; do claude; sleep 2; done'"
+ExecStop=/bin/bash -lc "tmux kill-session -t claude"
+RemainAfterExit=yes
+KillMode=none
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now claude-session.service
+```
+
+Verify:
+
+```bash
+systemctl status claude-session.service   # should say "active"
+tmux ls                                    # should list: claude
+```
+
+This survives reboots (systemd relaunches on boot), self-restarts Claude if it
+exits (the `while true` loop), and always leaves a `claude` tmux session waiting
+to attach.
+
+> **Authentication — read this.** Do **not** mirror `~/.claude/.credentials.json`
+> from another machine onto the droplet (e.g. a "creds-push" timer). Sharing one
+> OAuth session across two machines makes them invalidate each other's token,
+> which produces an endless login / verification-code loop. Instead use a
+> long-lived token — see [Stop the login/verification-code loop](#stop-the-loginverification-code-loop)
+> below.
+
+### Connecting from any device
+
+```bash
+ssh root@100.96.93.82
+tmux attach -t claude          # or: tmux attach -t claude || tmux new -s claude
+```
+
+To detach without stopping Claude: press `Ctrl-b` then `d` (or just close the
+window). On iOS SSH clients (Termius, Blink, etc.), save `root@100.96.93.82` as a
+host and set its "command on connect" to
+`tmux attach -t claude || tmux new -s claude` for one-tap access.
+
+### Persistent session logging
+
+To keep a running log of the session output, enable `tmux` pane logging. It pipes
+everything the session prints to a file, and a tmux hook re-enables it
+automatically whenever the session is recreated (e.g. after a reboot):
+
+```bash
+mkdir -p /root/claude-logs
+
+# Start logging the session running right now
+tmux pipe-pane -t claude -o 'cat >> /root/claude-logs/claude.log'
+
+# Auto-log every future session on boot/restart
+cat >> /root/.tmux.conf <<'EOF'
+# auto-log every pane to /root/claude-logs/<session>.log
+set-hook -g session-created 'pipe-pane -o "cat >> /root/claude-logs/#{session_name}.log"'
+set-hook -g pane-focus-in   'pipe-pane -o "cat >> /root/claude-logs/#{session_name}.log"'
+EOF
+```
+
+Read or follow the log from any device:
+
+```bash
+tail -f /root/claude-logs/claude.log      # live tail
+less /root/claude-logs/claude.log         # scroll full history
+```
+
+Note: this captures raw terminal output, so the file includes TUI redraw/escape
+codes and reads noisily. For a clean conversation transcript, use Claude Code's
+own structured session history under `~/.claude/` (per-project `.jsonl` files)
+instead.
+
+### Spinning up a NEW always-on Claude node (zero-auth-hassle)
+
+`scripts/setup-droplet-node.sh` turns a fresh Ubuntu droplet into a permanent,
+always-on Claude node where popping in later takes two taps and no auth dance.
+It installs Node + Claude Code + tmux + Tailscale, enables **Tailscale SSH**, and
+sets up the self-restarting `claude-session` service, logging, and a `cc` alias.
+
+The "no auth hour" comes from eliminating both sources of friction:
+
+1. **SSH login** — Tailscale SSH (`tailscale up --ssh`) lets you SSH in by your
+   tailnet identity. No SSH keys to generate or copy, no passwords.
+2. **Claude login** — you log in once; credentials persist in `~/.claude` and
+   auto-refresh, so reboots and self-restarts keep you authenticated.
+
+#### Steps
+
+1. **Create the droplet** (DigitalOcean → Create → Droplets): Ubuntu LTS, the
+   smallest size is fine. Or with `doctl`:
+   ```bash
+   doctl compute droplet create claude-node \
+     --image ubuntu-24-04-x64 --size s-1vcpu-1gb --region nyc1 \
+     --ssh-keys <your-key-fingerprint> --wait
+   ```
+
+2. **Generate a Tailscale auth key** at
+   https://login.tailscale.com/admin/settings/keys → **Generate auth key**.
+   Make it **Reusable** and leave **Ephemeral OFF** (the droplet is permanent, so
+   it should stay a stable node).
+
+3. **Mint a long-lived Claude token** on a machine where Claude is already
+   logged in (avoids the login/code loop entirely — see the section below):
+   ```bash
+   claude setup-token       # copy the sk-... token
+   ```
+
+4. **Run the bootstrap** on the new droplet, passing the token via env so it's
+   baked in (copy the script over or paste it):
+   ```bash
+   CLAUDE_CODE_OAUTH_TOKEN=sk-... sudo -E bash setup-droplet-node.sh <TAILSCALE_AUTHKEY> claude-node
+   ```
+   (You can also run it without the token and paste it into
+   `/etc/claude-session.env` afterward, then `systemctl restart claude-session`.)
+
+5. **Every time after:** `ssh root@claude-node` then `cc`. On iOS, save the host
+   with "command on connect" = `tmux attach -t claude || tmux new -s claude`.
+   No login prompts — the token keeps it authenticated.
+
+#### Make Tailscale SSH frictionless (one ACL tweak)
+
+By default, Tailscale SSH uses `check` mode, which re-prompts for browser
+re-auth every ~12h. To avoid that on your own devices, edit your tailnet ACLs
+(https://login.tailscale.com/admin/acls) so the SSH rule uses `accept` and
+allows `root`:
+
+```jsonc
+"ssh": [
+  {
+    "action": "accept",                 // not "check" -> no periodic re-auth
+    "src":    ["autogroup:member"],
+    "dst":    ["autogroup:self"],
+    "users":  ["autogroup:nonroot", "root"]
+  }
+]
+```
+
+## Stop the login/verification-code loop
+
+If the droplet's Claude keeps asking for logins and verification codes, the cause
+is almost always a shared OAuth session — e.g. a "creds-push" timer copying
+`~/.claude/.credentials.json` from a laptop. Both machines then use one session
+and invalidate each other's token on every refresh, looping forever. Per the
+[official Claude Code auth docs](https://code.claude.com/docs/en/authentication),
+that file must never be hand-copied.
+
+The supported fix is a long-lived (1-year) token that is not tied to your
+laptop's session:
+
+1. **On a machine where Claude is already logged in**, mint the token:
+   ```bash
+   claude setup-token        # copy the sk-... token it prints
+   ```
+
+2. **On the droplet**, remove the creds-push timer and stale credentials:
+   ```bash
+   # creds-push was a USER unit in the original setup
+   systemctl --user disable --now claude-creds-push.timer 2>/dev/null
+   systemctl --user disable --now claude-creds-push.service 2>/dev/null
+   rm -f ~/.config/systemd/user/claude-creds-push.*
+   rm -f /root/.claude/.credentials.json
+   ```
+
+3. **Store the token** in a root-only env file (kept out of git):
+   ```bash
+   cat > /etc/claude-session.env <<'EOF'
+   HOME=/root
+   CLAUDE_CODE_OAUTH_TOKEN=sk-PASTE-YOUR-TOKEN-HERE
+   EOF
+   chmod 600 /etc/claude-session.env
+   ```
+
+4. **Point the service at it** — the `claude-session.service` unit loads the token
+   via `EnvironmentFile=/etc/claude-session.env` and sets `Environment=HOME=/root`
+   (the bootstrap script already writes it this way; if you created the unit by
+   hand earlier, add those two lines under `[Service]`). Then:
+   ```bash
+   systemctl daemon-reload
+   systemctl restart claude-session.service
+   ```
+
+After this the session stays authenticated; you regenerate the token about once a
+year. (Alternative: an Anthropic Console API key in `ANTHROPIC_API_KEY`, which
+takes precedence over OAuth but bills per-token against a Console account rather
+than your Pro/Max subscription.)
+
 ## Troubleshooting
 
 **Render service shows "Application failed to respond"**: usually a missing env var. Check the Render logs tab.
