@@ -150,8 +150,14 @@ tmux ls                                    # should list: claude
 
 This survives reboots (systemd relaunches on boot), self-restarts Claude if it
 exits (the `while true` loop), and always leaves a `claude` tmux session waiting
-to attach. It relies on the droplet's Claude OAuth credentials staying fresh —
-that is what the `claude-creds-push` timer is for.
+to attach.
+
+> **Authentication — read this.** Do **not** mirror `~/.claude/.credentials.json`
+> from another machine onto the droplet (e.g. a "creds-push" timer). Sharing one
+> OAuth session across two machines makes them invalidate each other's token,
+> which produces an endless login / verification-code loop. Instead use a
+> long-lived token — see [Stop the login/verification-code loop](#stop-the-loginverification-code-loop)
+> below.
 
 ### Connecting from any device
 
@@ -226,21 +232,23 @@ The "no auth hour" comes from eliminating both sources of friction:
    Make it **Reusable** and leave **Ephemeral OFF** (the droplet is permanent, so
    it should stay a stable node).
 
-3. **Run the bootstrap** on the new droplet (copy the script over or paste it):
+3. **Mint a long-lived Claude token** on a machine where Claude is already
+   logged in (avoids the login/code loop entirely — see the section below):
    ```bash
-   sudo bash setup-droplet-node.sh <TAILSCALE_AUTHKEY> claude-node
+   claude setup-token       # copy the sk-... token
    ```
 
-4. **Authenticate Claude once:**
+4. **Run the bootstrap** on the new droplet, passing the token via env so it's
+   baked in (copy the script over or paste it):
    ```bash
-   ssh root@claude-node     # Tailscale SSH; works once the node joined
-   cc                       # attach to the live session
-   # complete the Claude login prompt
+   CLAUDE_CODE_OAUTH_TOKEN=sk-... sudo -E bash setup-droplet-node.sh <TAILSCALE_AUTHKEY> claude-node
    ```
-   That's the only interactive auth you'll do.
+   (You can also run it without the token and paste it into
+   `/etc/claude-session.env` afterward, then `systemctl restart claude-session`.)
 
 5. **Every time after:** `ssh root@claude-node` then `cc`. On iOS, save the host
    with "command on connect" = `tmux attach -t claude || tmux new -s claude`.
+   No login prompts — the token keeps it authenticated.
 
 #### Make Tailscale SSH frictionless (one ACL tweak)
 
@@ -260,13 +268,54 @@ allows `root`:
 ]
 ```
 
-#### Optional: skip even the first Claude login
+## Stop the login/verification-code loop
 
-To avoid the one-time interactive login, pre-load credentials from an
-already-authenticated machine (the same idea as the `claude-creds-push` setup on
-the original droplet): copy `~/.claude/.credentials.json` onto the new node at
-`/root/.claude/.credentials.json` before starting the service. Keep them fresh
-with a small timer if your tokens rotate.
+If the droplet's Claude keeps asking for logins and verification codes, the cause
+is almost always a shared OAuth session — e.g. a "creds-push" timer copying
+`~/.claude/.credentials.json` from a laptop. Both machines then use one session
+and invalidate each other's token on every refresh, looping forever. Per the
+[official Claude Code auth docs](https://code.claude.com/docs/en/authentication),
+that file must never be hand-copied.
+
+The supported fix is a long-lived (1-year) token that is not tied to your
+laptop's session:
+
+1. **On a machine where Claude is already logged in**, mint the token:
+   ```bash
+   claude setup-token        # copy the sk-... token it prints
+   ```
+
+2. **On the droplet**, remove the creds-push timer and stale credentials:
+   ```bash
+   # creds-push was a USER unit in the original setup
+   systemctl --user disable --now claude-creds-push.timer 2>/dev/null
+   systemctl --user disable --now claude-creds-push.service 2>/dev/null
+   rm -f ~/.config/systemd/user/claude-creds-push.*
+   rm -f /root/.claude/.credentials.json
+   ```
+
+3. **Store the token** in a root-only env file (kept out of git):
+   ```bash
+   cat > /etc/claude-session.env <<'EOF'
+   HOME=/root
+   CLAUDE_CODE_OAUTH_TOKEN=sk-PASTE-YOUR-TOKEN-HERE
+   EOF
+   chmod 600 /etc/claude-session.env
+   ```
+
+4. **Point the service at it** — the `claude-session.service` unit loads the token
+   via `EnvironmentFile=/etc/claude-session.env` and sets `Environment=HOME=/root`
+   (the bootstrap script already writes it this way; if you created the unit by
+   hand earlier, add those two lines under `[Service]`). Then:
+   ```bash
+   systemctl daemon-reload
+   systemctl restart claude-session.service
+   ```
+
+After this the session stays authenticated; you regenerate the token about once a
+year. (Alternative: an Anthropic Console API key in `ANTHROPIC_API_KEY`, which
+takes precedence over OAuth but bills per-token against a Console account rather
+than your Pro/Max subscription.)
 
 ## Troubleshooting
 

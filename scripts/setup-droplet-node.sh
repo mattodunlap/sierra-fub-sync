@@ -15,10 +15,17 @@
 #                        (non-ephemeral so the node is permanent).
 #   [HOSTNAME]           Optional tailnet name for the node. Default: claude-node
 #
+# Claude auth (IMPORTANT): do NOT mirror ~/.claude/.credentials.json from another
+# machine -- sharing one OAuth session across machines causes an endless
+# login/verification-code loop. Instead mint a long-lived (1-year) token on an
+# already-logged-in machine with `claude setup-token` and provide it here via the
+# CLAUDE_CODE_OAUTH_TOKEN env var (or paste it into /etc/claude-session.env after).
+#
 set -euo pipefail
 
 TS_AUTHKEY="${1:-${TS_AUTHKEY:-}}"
 NODE_HOSTNAME="${2:-claude-node}"
+CLAUDE_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}"
 
 log() { printf '\n>> %s\n' "$*"; }
 
@@ -59,6 +66,16 @@ fi
 TS_IP="$(tailscale ip -4 2>/dev/null | head -1 || true)"
 log "Tailscale IPv4: ${TS_IP:-<pending>}"
 
+log "Writing Claude auth env file (/etc/claude-session.env)..."
+# Long-lived token from `claude setup-token`, kept out of git, root-only.
+if [ ! -f /etc/claude-session.env ]; then
+  cat > /etc/claude-session.env <<EOF
+HOME=/root
+CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_TOKEN:-PASTE_TOKEN_FROM_claude_setup-token_HERE}
+EOF
+  chmod 600 /etc/claude-session.env
+fi
+
 log "Installing the persistent, self-restarting Claude session service..."
 cat > /etc/systemd/system/claude-session.service <<'EOF'
 [Unit]
@@ -70,6 +87,9 @@ Wants=network-online.target
 Type=forking
 User=root
 WorkingDirectory=/root
+Environment=HOME=/root
+# Long-lived Claude token (from `claude setup-token`) so it never re-prompts.
+EnvironmentFile=/etc/claude-session.env
 # login shell (-l) loads PATH so `claude` resolves; while-loop relaunches it if it ever exits
 ExecStart=/bin/bash -lc "tmux new-session -d -s claude 'while true; do claude; sleep 2; done'"
 ExecStop=/bin/bash -lc "tmux kill-session -t claude"
@@ -97,21 +117,28 @@ log "Enabling and starting the service..."
 systemctl daemon-reload
 systemctl enable --now claude-session.service
 
+TOKEN_NOTE="OK (token already set)"
+if grep -q "PASTE_TOKEN" /etc/claude-session.env 2>/dev/null; then
+  TOKEN_NOTE="ACTION NEEDED -- paste your token (see below)"
+fi
+
 cat <<EOF
 
 ==================================================================
  Node is up and the Claude session is running & self-restarting.
 
- ONE-TIME: authenticate Claude once, then never again:
+ CLAUDE AUTH: ${TOKEN_NOTE}
+   This node authenticates with a long-lived token, NOT a copied
+   credentials file -- so it will not loop on login/verification codes.
+
+   If you still need to set the token:
+     1) On a logged-in machine:   claude setup-token   (copy the sk-... token)
+     2) On this node, edit /etc/claude-session.env and replace the
+        CLAUDE_CODE_OAUTH_TOKEN value, then:
+            systemctl restart claude-session.service
+
+ CONNECT (every time):
      ssh root@${NODE_HOSTNAME}        # Tailscale SSH, no keys needed
-     cc                               # attach to the live session
-     # complete the Claude login prompt inside the session
-
- After that login, credentials persist in ~/.claude and auto-refresh,
- so reboots and self-restarts keep you logged in.
-
- EVERY TIME AFTER:
-     ssh root@${NODE_HOSTNAME}
      cc                               # straight into the live Claude
 
  Tailscale IPv4: ${TS_IP:-<run: tailscale ip -4>}
