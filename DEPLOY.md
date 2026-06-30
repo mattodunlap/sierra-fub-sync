@@ -93,6 +93,78 @@ After deploying, verify:
 - [ ] Sierra webhook test fires correctly (check Render logs for incoming requests)
 - [ ] FUB email template merge tag resolves to the correct URL when sent
 
+## Accessing Claude Code on the droplet (from phone or computer)
+
+The droplet runs an always-on Claude Code session inside `tmux` so you can attach
+to it from any device on your Tailscale network (phone, laptop) and have it
+survive disconnects, crashes, and reboots.
+
+### Network
+
+The droplet is reachable at its Tailscale address `100.96.93.82`. Every device
+that connects must have Tailscale installed and signed into the **same** account,
+with the VPN toggled **on**. This keeps the droplet off the public internet — no
+port forwarding required.
+
+### Permanent, self-restarting session (one-time setup on the droplet)
+
+Confirm the binary paths first:
+
+```bash
+which tmux && which claude
+```
+
+Create a systemd service that keeps a `tmux` session named `claude` alive:
+
+```bash
+cat > /etc/systemd/system/claude-session.service <<'EOF'
+[Unit]
+Description=Persistent self-restarting Claude Code session in tmux
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/root
+# login shell (-l) loads PATH so `claude` resolves; while-loop relaunches it if it ever exits
+ExecStart=/bin/bash -lc "tmux new-session -d -s claude 'while true; do claude; sleep 2; done'"
+ExecStop=/bin/bash -lc "tmux kill-session -t claude"
+RemainAfterExit=yes
+KillMode=none
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now claude-session.service
+```
+
+Verify:
+
+```bash
+systemctl status claude-session.service   # should say "active"
+tmux ls                                    # should list: claude
+```
+
+This survives reboots (systemd relaunches on boot), self-restarts Claude if it
+exits (the `while true` loop), and always leaves a `claude` tmux session waiting
+to attach. It relies on the droplet's Claude OAuth credentials staying fresh —
+that is what the `claude-creds-push` timer is for.
+
+### Connecting from any device
+
+```bash
+ssh root@100.96.93.82
+tmux attach -t claude          # or: tmux attach -t claude || tmux new -s claude
+```
+
+To detach without stopping Claude: press `Ctrl-b` then `d` (or just close the
+window). On iOS SSH clients (Termius, Blink, etc.), save `root@100.96.93.82` as a
+host and set its "command on connect" to
+`tmux attach -t claude || tmux new -s claude` for one-tap access.
+
 ## Troubleshooting
 
 **Render service shows "Application failed to respond"**: usually a missing env var. Check the Render logs tab.
