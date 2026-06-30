@@ -165,6 +165,38 @@ window). On iOS SSH clients (Termius, Blink, etc.), save `root@100.96.93.82` as 
 host and set its "command on connect" to
 `tmux attach -t claude || tmux new -s claude` for one-tap access.
 
+### Persistent session logging
+
+To keep a running log of the session output, enable `tmux` pane logging. It pipes
+everything the session prints to a file, and a tmux hook re-enables it
+automatically whenever the session is recreated (e.g. after a reboot):
+
+```bash
+mkdir -p /root/claude-logs
+
+# Start logging the session running right now
+tmux pipe-pane -t claude -o 'cat >> /root/claude-logs/claude.log'
+
+# Auto-log every future session on boot/restart
+cat >> /root/.tmux.conf <<'EOF'
+# auto-log every pane to /root/claude-logs/<session>.log
+set-hook -g session-created 'pipe-pane -o "cat >> /root/claude-logs/#{session_name}.log"'
+set-hook -g pane-focus-in   'pipe-pane -o "cat >> /root/claude-logs/#{session_name}.log"'
+EOF
+```
+
+Read or follow the log from any device:
+
+```bash
+tail -f /root/claude-logs/claude.log      # live tail
+less /root/claude-logs/claude.log         # scroll full history
+```
+
+Note: this captures raw terminal output, so the file includes TUI redraw/escape
+codes and reads noisily. For a clean conversation transcript, use Claude Code's
+own structured session history under `~/.claude/` (per-project `.jsonl` files)
+instead.
+
 ## Troubleshooting
 
 **Render service shows "Application failed to respond"**: usually a missing env var. Check the Render logs tab.
