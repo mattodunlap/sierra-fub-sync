@@ -1,5 +1,10 @@
 services:
   - type: web
+    name: maittrix-portal
+    runtime: static
+    staticPublishPath: portal
+    buildCommand: ""
+  - type: web
     name: sierra-fub-webhook
     runtime: python
     plan: free
