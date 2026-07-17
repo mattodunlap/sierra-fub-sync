@@ -72,7 +72,8 @@ def sierra_id_for(person):
     """Derive the Sierra lead id from URL fields, else Sierra email lookup."""
     for field in ("customSierraSearchURL", "customSierraLoginURL",
                   "customSierraAdminURL"):
-        m = re.search(r"(?:userid|id)=(\d+)", person.get(field) or "")
+        # Anchor on ? or & so e.g. "searchid=" can never match as "id="
+        m = re.search(r"[?&](?:userid|id)=(\d+)", person.get(field) or "")
         if m:
             return int(m.group(1))
     emails = person.get("emails") or []
