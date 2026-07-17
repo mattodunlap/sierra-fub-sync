@@ -55,6 +55,18 @@ The workflow will run automatically every 5 min. To run it once manually right n
 
 The webhook runs as a small always-on machine on Fly.io. Config lives in `fly.toml` and `Dockerfile` — you shouldn't need to touch either.
 
+### Option A — from GitHub Actions (recommended, no local tooling)
+
+1. Create a Fly org token: https://fly.io/dashboard → Tokens (an **org** token, so the workflow can create the app; app-scoped deploy tokens can't).
+2. Repo → Settings → Secrets and variables → Actions → add:
+   - `FLY_API_TOKEN` = the token from step 1
+   - `WEBHOOK_SECRET` = a fresh random UUID (the old one is burned — see cutover section)
+3. Actions tab → **Deploy webhook to Fly** → Run workflow, and check **register_webhook** to also point Sierra's LeadRegistered subscription at the new URL.
+
+That one run creates the app, sets the Fly secrets, deploys, health-checks, and registers the webhook. After merge, any change to the handler auto-deploys on push to `main`.
+
+### Option B — from your machine
+
 One-time setup:
 
 1. Sign up at https://fly.io and install flyctl: https://fly.io/docs/flyctl/install/
