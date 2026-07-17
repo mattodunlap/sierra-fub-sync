@@ -115,22 +115,24 @@ After deploying, verify:
 - [ ] Sierra webhook test fires correctly (`fly logs` shows the incoming POST and its result)
 - [ ] FUB email template merge tag resolves to the correct URL when sent
 
-## Migrating off Render
+## Cutover from the current setup
 
-This webhook previously ran on Render free tier (`https://sierra-fub-sync.onrender.com` — still live as of 2026-07-17). Cutover order matters — don't kill the old host until Fly is confirmed receiving Sierra's webhooks.
+History, so the steps below make sense: Sierra **banned** the original Render webhook subscription on 2026-06-01 (4 failed deliveries), and since then real-time URL population has been handled by a 1-minute poll bridge on the droplet (`new-lead-url-populate.timer` running `populate_new_lead_urls.py`). The Render app is still deployed but receives nothing. The droplet's direct Sierra API calls are WAF-blocked, so the bridge has been writing homepage fallback URLs instead of filtered saved-search URLs — the Fly webhook fixes that too.
 
 1. Deploy to Fly (section 3) and confirm `https://sierra-fub-webhook.fly.dev/` returns `{"status":"ok"}`.
 2. **Rotate the webhook secret.** The old secret was committed to this repo in an earlier version of `test_webhook.py`, and this repo is public — treat it as burned. Generate a fresh UUID and run `fly secrets set WEBHOOK_SECRET="new-value"` (this restarts the machine automatically). Put the same value in your local `.env`.
-3. Re-point the Sierra webhook at Fly:
+3. Register the Sierra webhook pointed at Fly:
 
 ```bash
-python3 register_sierra_webhook.py --url https://sierra-fub-webhook.fly.dev/sierra-webhook
+python3 register_sierra_webhook.py --url "https://sierra-fub-webhook.fly.dev/sierra-webhook?secret=NEW_SECRET"
 ```
 
-   From this moment Fly is live and Render stops receiving traffic. (`--list` shows what's currently registered if you want to check first.)
+   (`--list` first shows what's currently registered, including any banned leftovers.)
 4. Verify end-to-end: run `python test_webhook.py`, then register a fake lead on the IDX site and watch `fly logs` — you should see the POST arrive, an immediate `{"accepted":true}` reply, and the background lines showing the FUB contact getting its URL fields.
-5. Delete the Render service: https://dashboard.render.com → the service → Settings → Delete Web Service. It holds Sierra/FUB API keys in its env vars, so it shouldn't outlive the migration.
-6. Optional cleanup: rotate the Sierra + FUB API keys that lived on Render if you're unsure who had access.
+5. Turn off the droplet poll bridge: `systemctl --user disable --now new-lead-url-populate.timer` (it's redundant once the webhook is live — the 5-min GitHub Actions sync stays as the backstop).
+6. Delete the Render service: https://dashboard.render.com → the service → Settings → Delete Web Service. It holds Sierra/FUB API keys in its env vars, so it shouldn't outlive the migration.
+7. **Repair recent leads**: while the droplet was WAF-blocked, new leads got homepage URLs instead of filtered saved-search URLs. Run `populate_new_lead_urls.py --since-minutes 30000` once from a machine with clean Sierra egress (laptop or a Fly console — NOT the droplet) to fix the last ~3 weeks.
+8. Optional cleanup: rotate the Sierra + FUB API keys that lived on Render if you're unsure who had access.
 
 **If webhooks silently stop arriving later:** Sierra bans a subscription after 4 failed or slow deliveries. The handler acknowledges instantly (processing happens after the reply) specifically to avoid this, but if it ever happens — machine down during a deploy, for example — run `register_sierra_webhook.py --list` to inspect, then re-register with `--url`. The every-5-min polling sync catches any leads missed in the gap.
 
