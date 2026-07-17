@@ -92,13 +92,15 @@ To ship changes later: edit `webhook_handler.py`, commit, and run `fly deploy` a
 
 ## 4. Configure Sierra to send webhooks
 
-1. Sierra Admin → **Integrations** → look for **Webhooks** (might be under Direct API)
-2. Add a new webhook:
-   - **Event:** "New Lead Registration" (or equivalent — pick the event for new lead creation)
-   - **URL:** `https://sierra-fub-webhook.fly.dev/sierra-webhook`
-   - **Custom Header:** key=`X-Webhook-Secret`, value=(the same `WEBHOOK_SECRET` you set with `fly secrets set`)
-3. Save
-4. To test: register a fake lead on your IDX site (use a private/incognito browser, fake name, real-looking email you control). Within seconds, the FUB contact should be created with the auto-login URL already populated. Or run `python test_webhook.py` (needs `WEBHOOK_SECRET` in your local `.env`).
+Register the LeadRegistered webhook through Sierra's API (this is the proven path — the admin UI doesn't always expose webhooks):
+
+```bash
+python3 register_sierra_webhook.py --url "https://sierra-fub-webhook.fly.dev/sierra-webhook?secret=YOUR_WEBHOOK_SECRET"
+```
+
+Use the same `WEBHOOK_SECRET` value you set with `fly secrets set` (the handler accepts it as the `?secret=` query param or an `X-Webhook-Secret` header). Check what's registered anytime with `python3 register_sierra_webhook.py --list`.
+
+To test: register a fake lead on your IDX site (use a private/incognito browser, fake name, real-looking email you control). Within seconds, the FUB contact should be created with the auto-login URL already populated. Or run `python test_webhook.py` (needs `WEBHOOK_SECRET` in your local `.env`).
 
 If Sierra doesn't show a webhooks UI, email support@sierrainteractive.com:
 > "How do I configure outbound webhooks for new lead registrations? I want to send a POST request to my own endpoint when a new lead registers, including the lead ID in the payload."
@@ -113,18 +115,24 @@ After deploying, verify:
 - [ ] Sierra webhook test fires correctly (`fly logs` shows the incoming POST and its result)
 - [ ] FUB email template merge tag resolves to the correct URL when sent
 
-## Migrating off the old DigitalOcean droplet
+## Migrating off Render
 
-The webhook used to run on a DigitalOcean droplet, and an older copy is still live on Render free tier (`https://sierra-fub-sync.onrender.com` — verified responding as of 2026-07-17). Cutover order matters — don't kill the old hosts until Fly is confirmed receiving Sierra's webhooks. Check Sierra Admin → Integrations → Webhooks to see which URL is currently receiving traffic before you start.
+This webhook previously ran on Render free tier (`https://sierra-fub-sync.onrender.com` — still live as of 2026-07-17). Cutover order matters — don't kill the old host until Fly is confirmed receiving Sierra's webhooks.
 
 1. Deploy to Fly (section 3) and confirm `https://sierra-fub-webhook.fly.dev/` returns `{"status":"ok"}`.
-2. **Rotate the webhook secret.** The old secret was committed to this repo in an earlier version of `test_webhook.py`, so treat it as burned. Generate a fresh UUID and run `fly secrets set WEBHOOK_SECRET="new-value"` (this restarts the machine automatically). Put the same value in your local `.env`.
-3. In Sierra Admin, edit the existing webhook: change the URL to `https://sierra-fub-webhook.fly.dev/sierra-webhook` and the `X-Webhook-Secret` header to the new secret. From this moment Fly is live and the droplet stops receiving traffic.
-4. Verify end-to-end: run `python test_webhook.py`, then register a fake lead on the IDX site and watch `fly logs` — you should see the POST arrive and the FUB contact get the URL fields.
-5. Let both run for a day or two if you want a safety net; the droplet receives nothing but costs nothing extra while it idles.
-6. Decommission the droplet: DigitalOcean control panel → the droplet → **Destroy** → "Destroy this Droplet" (destroying, not just powering off, is what stops billing). If anything else runs on that droplet, just stop the webhook service instead (`systemctl disable --now <service>`) and leave the droplet up.
-7. Delete the leftover Render service too: https://dashboard.render.com → `sierra-fub-webhook` (or `sierra-fub-sync`) → Settings → Delete Web Service. It still holds your Sierra/FUB API keys in its env vars, so it shouldn't outlive the migration.
-8. Optional cleanup: delete any DNS record that pointed at the droplet's IP, and revoke/rotate the Sierra + FUB API keys that lived on it if you're unsure who had access.
+2. **Rotate the webhook secret.** The old secret was committed to this repo in an earlier version of `test_webhook.py`, and this repo is public — treat it as burned. Generate a fresh UUID and run `fly secrets set WEBHOOK_SECRET="new-value"` (this restarts the machine automatically). Put the same value in your local `.env`.
+3. Re-point the Sierra webhook at Fly:
+
+```bash
+python3 register_sierra_webhook.py --url https://sierra-fub-webhook.fly.dev/sierra-webhook
+```
+
+   From this moment Fly is live and Render stops receiving traffic. (`--list` shows what's currently registered if you want to check first.)
+4. Verify end-to-end: run `python test_webhook.py`, then register a fake lead on the IDX site and watch `fly logs` — you should see the POST arrive, an immediate `{"accepted":true}` reply, and the background lines showing the FUB contact getting its URL fields.
+5. Delete the Render service: https://dashboard.render.com → the service → Settings → Delete Web Service. It holds Sierra/FUB API keys in its env vars, so it shouldn't outlive the migration.
+6. Optional cleanup: rotate the Sierra + FUB API keys that lived on Render if you're unsure who had access.
+
+**If webhooks silently stop arriving later:** Sierra bans a subscription after 4 failed or slow deliveries. The handler acknowledges instantly (processing happens after the reply) specifically to avoid this, but if it ever happens — machine down during a deploy, for example — run `register_sierra_webhook.py --list` to inspect, then re-register with `--url`. The every-5-min polling sync catches any leads missed in the gap.
 
 ## Troubleshooting
 
