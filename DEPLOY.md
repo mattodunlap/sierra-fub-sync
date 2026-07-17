@@ -115,7 +115,7 @@ After deploying, verify:
 
 ## Migrating off the old DigitalOcean droplet
 
-The webhook used to run on a DigitalOcean droplet. Cutover order matters — don't kill the droplet until Fly is confirmed receiving Sierra's webhooks:
+The webhook used to run on a DigitalOcean droplet, and an older copy is still live on Render free tier (`https://sierra-fub-sync.onrender.com` — verified responding as of 2026-07-17). Cutover order matters — don't kill the old hosts until Fly is confirmed receiving Sierra's webhooks. Check Sierra Admin → Integrations → Webhooks to see which URL is currently receiving traffic before you start.
 
 1. Deploy to Fly (section 3) and confirm `https://sierra-fub-webhook.fly.dev/` returns `{"status":"ok"}`.
 2. **Rotate the webhook secret.** The old secret was committed to this repo in an earlier version of `test_webhook.py`, so treat it as burned. Generate a fresh UUID and run `fly secrets set WEBHOOK_SECRET="new-value"` (this restarts the machine automatically). Put the same value in your local `.env`.
@@ -123,7 +123,8 @@ The webhook used to run on a DigitalOcean droplet. Cutover order matters — don
 4. Verify end-to-end: run `python test_webhook.py`, then register a fake lead on the IDX site and watch `fly logs` — you should see the POST arrive and the FUB contact get the URL fields.
 5. Let both run for a day or two if you want a safety net; the droplet receives nothing but costs nothing extra while it idles.
 6. Decommission the droplet: DigitalOcean control panel → the droplet → **Destroy** → "Destroy this Droplet" (destroying, not just powering off, is what stops billing). If anything else runs on that droplet, just stop the webhook service instead (`systemctl disable --now <service>`) and leave the droplet up.
-7. Optional cleanup: delete any DNS record that pointed at the droplet's IP, and revoke/rotate the Sierra + FUB API keys that lived on it if you're unsure who had access.
+7. Delete the leftover Render service too: https://dashboard.render.com → `sierra-fub-webhook` (or `sierra-fub-sync`) → Settings → Delete Web Service. It still holds your Sierra/FUB API keys in its env vars, so it shouldn't outlive the migration.
+8. Optional cleanup: delete any DNS record that pointed at the droplet's IP, and revoke/rotate the Sierra + FUB API keys that lived on it if you're unsure who had access.
 
 ## Troubleshooting
 
