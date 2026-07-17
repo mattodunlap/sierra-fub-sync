@@ -3,7 +3,7 @@
 Two pieces to deploy:
 
 1. **GitHub Actions polling sync** — the catch-everything backstop, runs every 5 min
-2. **Fly.io webhook** — real-time updates for new lead registrations
+2. **Fly.io URL populator** — near-real-time (60s) URL population for new lead registrations
 
 Both pieces share the same GitHub repo. Set up the repo first.
 
@@ -51,107 +51,67 @@ Add these four:
 
 The workflow will run automatically every 5 min. To run it once manually right now: **Actions** tab → **Sierra-FUB Sync** → **Run workflow**.
 
-## 3. Deploy webhook to Fly.io
+## 3. Deploy the URL populator to Fly.io
 
-The webhook runs as a small always-on machine on Fly.io. Config lives in `fly.toml` and `Dockerfile` — you shouldn't need to touch either.
+Real-time URL population runs as a tiny always-on Fly machine (`url_populator.py`): every 60 seconds it polls FUB for newly-created leads and fills in `customSierraSearchURL` + `customSierraAdminURL`. It has **no public endpoint** — nothing to secure, no webhook secret, and no Sierra webhook subscription to get silently banned. Config lives in `fly.toml` and `Dockerfile`.
 
 ### Option A — from GitHub Actions (recommended, no local tooling)
 
 1. Create a Fly org token: https://fly.io/dashboard → Tokens (an **org** token, so the workflow can create the app; app-scoped deploy tokens can't).
-2. Repo → Settings → Secrets and variables → Actions → add:
-   - `FLY_API_TOKEN` = the token from step 1
-   - `WEBHOOK_SECRET` = a fresh random UUID (the old one is burned — see cutover section)
-3. Actions tab → **Deploy webhook to Fly** → Run workflow, and check **register_webhook** to also point Sierra's LeadRegistered subscription at the new URL.
+2. Repo → Settings → Secrets and variables → Actions → add `FLY_API_TOKEN` = that token.
+3. Actions tab → **Deploy URL populator to Fly** → Run workflow.
 
-That one run creates the app, sets the Fly secrets, deploys, health-checks, and registers the webhook. After merge, any change to the handler auto-deploys on push to `main`.
+That one run creates the app, sets the Fly secrets from the repo's existing `SIERRA_API_KEY`/`FUB_API_KEY` secrets, deploys, and confirms the machine is running. After merge, any change to the populator auto-deploys on push to `main`.
 
 ### Option B — from your machine
 
-One-time setup:
-
 1. Sign up at https://fly.io and install flyctl: https://fly.io/docs/flyctl/install/
-   - Windows (PowerShell): `pwsh -Command "iwr https://fly.io/install.ps1 -useb | iex"`
-2. Log in: `fly auth login`
-3. From the project folder, create the app (the name is taken from `fly.toml`):
+2. `fly auth login`
+3. From the project folder:
 
 ```bash
-fly apps create sierra-fub-webhook
-```
-
-   If the name is taken globally, pick another (e.g. `dunlap-sierra-fub-webhook`) and update the `app = ` line in `fly.toml` to match.
-
-4. Set the secrets (one command, all three):
-
-```bash
-fly secrets set SIERRA_API_KEY="your-sierra-key" FUB_API_KEY="your-fub-key" WEBHOOK_SECRET="any-random-string"
-```
-
-   `WEBHOOK_SECRET` can be any random string (e.g., a UUID — generate at https://www.uuidgenerator.net). Non-secret config (`FUB_CUSTOM_FIELD`, `SIERRA_ORIGINATING_SYSTEM`) is already set in `fly.toml` under `[env]`.
-
-5. Deploy:
-
-```bash
+fly apps create sierra-fub-sync
+fly secrets set SIERRA_API_KEY="your-sierra-key" FUB_API_KEY="your-fub-key"
 fly deploy --ha=false
 ```
 
-   (`--ha=false` keeps it to a single machine — one is plenty for webhook volume, and it halves the cost. Only needed the first time; later deploys are just `fly deploy`.)
+   If the app name is taken globally, pick another and update the `app = ` line in `fly.toml` to match. (`--ha=false` keeps it to a single machine — one is plenty; only needed the first time.)
 
-6. Test it: open `https://sierra-fub-webhook.fly.dev/` in a browser. Should show `{"status":"ok"}`. That confirms the service is up.
+4. Watch it work: `fly logs` shows a poll pass every 60s and a line per lead it populates. `fly status` shows machine health.
 
-To ship changes later: edit `webhook_handler.py`, commit, and run `fly deploy` again. `fly logs` tails live request logs; `fly status` shows machine health.
+## 4. No Sierra webhook needed
 
-`fly.toml` keeps `min_machines_running = 1`, so there is no cold start — webhooks are handled within seconds, always.
+The poller replaces the old LeadRegistered webhook on purpose: Sierra silently bans webhook subscriptions after 4 failed/slow deliveries (it banned this project's Render subscription on 2026-06-01), and a banned subscription fails silently. Polling FUB every 60s gets effectively the same latency with nothing to ban and no public attack surface.
 
-## 4. Configure Sierra to send webhooks
-
-Register the LeadRegistered webhook through Sierra's API (this is the proven path — the admin UI doesn't always expose webhooks):
-
-```bash
-python3 register_sierra_webhook.py --url "https://sierra-fub-webhook.fly.dev/sierra-webhook?secret=YOUR_WEBHOOK_SECRET"
-```
-
-Use the same `WEBHOOK_SECRET` value you set with `fly secrets set` (the handler accepts it as the `?secret=` query param or an `X-Webhook-Secret` header). Check what's registered anytime with `python3 register_sierra_webhook.py --list`.
-
-To test: register a fake lead on your IDX site (use a private/incognito browser, fake name, real-looking email you control). Within seconds, the FUB contact should be created with the auto-login URL already populated. Or run `python test_webhook.py` (needs `WEBHOOK_SECRET` in your local `.env`).
-
-If Sierra doesn't show a webhooks UI, email support@sierrainteractive.com:
-> "How do I configure outbound webhooks for new lead registrations? I want to send a POST request to my own endpoint when a new lead registers, including the lead ID in the payload."
+If you ever want true seconds-level latency back, `webhook_handler.py` is still in the image — run it with `uvicorn webhook_handler:app`, add an `[http_service]` block to `fly.toml`, set `WEBHOOK_SECRET`, and register with `register_sierra_webhook.py`. Not recommended unless something actually needs it.
 
 ## 5. Verify the whole stack
 
-After deploying, verify:
-
-- [ ] `run_full_backfill.bat` finished successfully (existing leads have URLs in FUB)
 - [ ] GitHub Actions ran a successful sync (Actions tab shows green)
-- [ ] `fly status` shows the machine as `started` and `https://sierra-fub-webhook.fly.dev/` returns OK
-- [ ] Sierra webhook test fires correctly (`fly logs` shows the incoming POST and its result)
+- [ ] `fly status` shows the machine `started`; `fly logs` shows poll passes
+- [ ] Register a fake lead on the IDX site (private/incognito browser, fake name, real-looking email you control) — within ~2 minutes the FUB contact should have `customSierraSearchURL` + `customSierraAdminURL` populated
 - [ ] FUB email template merge tag resolves to the correct URL when sent
 
 ## Cutover from the current setup
 
-History, so the steps below make sense: Sierra **banned** the original Render webhook subscription on 2026-06-01 (4 failed deliveries), and since then real-time URL population has been handled by a 1-minute poll bridge on the droplet (`new-lead-url-populate.timer` running `populate_new_lead_urls.py`). The Render app is still deployed but receives nothing. The droplet's direct Sierra API calls are WAF-blocked, so the bridge has been writing homepage fallback URLs instead of filtered saved-search URLs — the Fly webhook fixes that too.
+History, so the steps below make sense: Sierra **banned** the original Render webhook subscription on 2026-06-01 (4 failed deliveries), and since then URL population has been handled by a 1-minute poll bridge on the droplet (`new-lead-url-populate.timer`). The Render app is still deployed but receives nothing. The droplet's direct Sierra API calls are WAF-blocked, so the bridge has been writing homepage fallback URLs instead of filtered saved-search URLs — the Fly poller fixes that (clean IPs).
 
-1. Deploy to Fly (section 3) and confirm `https://sierra-fub-webhook.fly.dev/` returns `{"status":"ok"}`.
-2. **Rotate the webhook secret.** The old secret was committed to this repo in an earlier version of `test_webhook.py`, and this repo is public — treat it as burned. Generate a fresh UUID and run `fly secrets set WEBHOOK_SECRET="new-value"` (this restarts the machine automatically). Put the same value in your local `.env`.
-3. Register the Sierra webhook pointed at Fly:
+1. Deploy to Fly (section 3) and confirm `fly logs` shows poll passes.
+2. Verify end-to-end with a fake IDX lead (section 5).
+3. Turn off the droplet poll bridge: `systemctl --user disable --now new-lead-url-populate.timer` (redundant now — the 5-min GitHub Actions sync stays as the backstop).
+4. Delete the Render service: https://dashboard.render.com → the service → Settings → Delete Web Service. It holds Sierra/FUB API keys (and the old burned webhook secret) in its env vars, so it shouldn't outlive the migration.
+5. **Repair recent leads**: while the droplet was WAF-blocked, new leads got homepage URLs instead of filtered saved-search URLs. One-time fix for the last ~3 weeks:
 
 ```bash
-python3 register_sierra_webhook.py --url "https://sierra-fub-webhook.fly.dev/sierra-webhook?secret=NEW_SECRET"
+fly ssh console -C "python url_populator.py --once --since-minutes 30000"
 ```
 
-   (`--list` first shows what's currently registered, including any banned leftovers.)
-4. Verify end-to-end: run `python test_webhook.py`, then register a fake lead on the IDX site and watch `fly logs` — you should see the POST arrive, an immediate `{"accepted":true}` reply, and the background lines showing the FUB contact getting its URL fields.
-5. Turn off the droplet poll bridge: `systemctl --user disable --now new-lead-url-populate.timer` (it's redundant once the webhook is live — the 5-min GitHub Actions sync stays as the backstop).
-6. Delete the Render service: https://dashboard.render.com → the service → Settings → Delete Web Service. It holds Sierra/FUB API keys in its env vars, so it shouldn't outlive the migration.
-7. **Repair recent leads**: while the droplet was WAF-blocked, new leads got homepage URLs instead of filtered saved-search URLs. Run `populate_new_lead_urls.py --since-minutes 30000` once from a machine with clean Sierra egress (laptop or a Fly console — NOT the droplet) to fix the last ~3 weeks.
-8. Optional cleanup: rotate the Sierra + FUB API keys that lived on Render if you're unsure who had access.
-
-**If webhooks silently stop arriving later:** Sierra bans a subscription after 4 failed or slow deliveries. The handler acknowledges instantly (processing happens after the reply) specifically to avoid this, but if it ever happens — machine down during a deploy, for example — run `register_sierra_webhook.py --list` to inspect, then re-register with `--url`. The every-5-min polling sync catches any leads missed in the gap.
+6. Optional cleanup: rotate the Sierra + FUB API keys that lived on Render if you're unsure who had access.
 
 ## Troubleshooting
 
 **`fly deploy` fails or the app won't start**: run `fly logs` — a Python `KeyError` on startup means a missing secret (`SIERRA_API_KEY` and `FUB_API_KEY` are required). `fly secrets list` shows what's set (names only, values stay hidden).
 
-**Webhook returns 401**: the `X-Webhook-Secret` header from Sierra doesn't match `WEBHOOK_SECRET` on Fly. Fix by aligning them (`fly secrets set WEBHOOK_SECRET=...` and update the header in Sierra).
+**Leads not getting URLs**: `fly logs` should show a poll pass every 60s. If passes run but a lead is skipped with `no sierra id derivable`, the FUB contact has no Sierra URL fields and no email match in Sierra — check the lead exists in Sierra. The 5-min GitHub Actions sync is the backstop either way.
 
-**Machine shows stopped**: `fly.toml` sets `min_machines_running = 1`, so the Fly proxy keeps one machine up and restarts it if it crashes. If it's stuck, `fly machine restart` or `fly deploy` brings it back.
+**Machine shows stopped**: `restart.policy = "always"` in `fly.toml` restarts it on crash. If it's stuck, `fly machine restart` or `fly deploy` brings it back.

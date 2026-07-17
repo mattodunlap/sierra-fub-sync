@@ -1,19 +1,15 @@
-name: Deploy webhook to Fly
+name: Deploy URL populator to Fly
 on:
   push:
     branches: [main]
     paths:
       - webhook_handler.py
+      - url_populator.py
       - requirements.txt
       - Dockerfile
       - fly.toml
       - .github/workflows/fly_deploy.yml
   workflow_dispatch:
-    inputs:
-      register_webhook:
-        description: "Also (re)register the Sierra LeadRegistered webhook to the Fly URL"
-        type: boolean
-        default: false
 
 concurrency:
   group: fly-deploy
@@ -29,39 +25,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Create app if it doesn't exist yet
-        run: flyctl apps create sierra-fub-webhook || true
+        run: flyctl apps create sierra-fub-sync || true
       - name: Sync Fly secrets from repo secrets
         # Unchanged values make flyctl exit non-zero ("no change detected") — that's fine.
         run: |
-          flyctl secrets set --app sierra-fub-webhook \
+          flyctl secrets set --app sierra-fub-sync \
             SIERRA_API_KEY="${{ secrets.SIERRA_API_KEY }}" \
             FUB_API_KEY="${{ secrets.FUB_API_KEY }}" \
-            WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
             --stage || true
       - name: Deploy
         run: flyctl deploy --remote-only --ha=false
-      - name: Health check
+      - name: Confirm machine is running
         run: |
           sleep 10
-          curl -sf --max-time 30 https://sierra-fub-webhook.fly.dev/ | grep -q '"ok"'
-          echo "Webhook is live."
-
-  register:
-    if: github.event_name == 'workflow_dispatch' && inputs.register_webhook
-    needs: deploy
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: pip install requests
-      - name: Register Sierra webhook pointed at Fly
-        env:
-          SIERRA_API_KEY: ${{ secrets.SIERRA_API_KEY }}
-          SIERRA_ORIGINATING_SYSTEM: ${{ secrets.SIERRA_ORIGINATING_SYSTEM }}
-        run: |
-          python register_sierra_webhook.py \
-            --url "https://sierra-fub-webhook.fly.dev/sierra-webhook?secret=${{ secrets.WEBHOOK_SECRET }}"
+          flyctl status --app sierra-fub-sync
+          flyctl machine list --app sierra-fub-sync | grep -q started
+          echo "URL populator is running."

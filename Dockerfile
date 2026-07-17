@@ -1,5 +1,7 @@
-# Webhook handler image for Fly.io.
-# The polling sync stays on GitHub Actions; only webhook_handler.py runs here.
+# URL populator image for Fly.io.
+# Runs the 60s FUB poll loop (url_populator.py) — no inbound service needed.
+# webhook_handler.py is included as the shared library of URL/FUB helpers
+# (and can be run instead via uvicorn if real-time webhooks are ever wanted).
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -10,8 +12,6 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY webhook_handler.py .
+COPY webhook_handler.py url_populator.py ./
 
-EXPOSE 8080
-
-CMD ["uvicorn", "webhook_handler:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "url_populator.py"]

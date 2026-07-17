@@ -6,7 +6,8 @@ Pulls each Sierra lead's auto-login URL into a Follow Up Boss custom field so it
 
 - `sierra_fub_sync.py` — polling script. Runs on a schedule, scans all leads, updates FUB. Use this for the initial backfill and as the steady-state sync.
 - `.github/workflows/sync.yml` — GitHub Actions workflow that runs the polling script every 5 minutes for free.
-- `webhook_handler.py` — FastAPI app that handles Sierra webhooks for real-time updates on new lead registrations. Runs on Fly.io (`fly.toml` + `Dockerfile`).
+- `url_populator.py` — 60-second FUB poll loop that populates URLs on newly-created leads. Runs on Fly.io (`fly.toml` + `Dockerfile`, deployed by `.github/workflows/fly_deploy.yml`). No public endpoint.
+- `webhook_handler.py` — the shared Sierra/FUB helpers, plus an optional FastAPI webhook receiver (not deployed by default — Sierra bans webhook subscriptions too easily; the poller replaces it).
 
 ## Required environment variables / GitHub Secrets
 
@@ -22,7 +23,7 @@ Pulls each Sierra lead's auto-login URL into a Follow Up Boss custom field so it
 
 **Polling**: push this repo to GitHub (private), add the four secrets under Settings → Secrets and variables → Actions, done. The workflow will run every 5 min.
 
-**Webhook**: deployed on Fly.io. `fly apps create sierra-fub-webhook`, `fly secrets set SIERRA_API_KEY=... FUB_API_KEY=... WEBHOOK_SECRET=...`, then `fly deploy`. In Sierra, point the webhook at `https://sierra-fub-webhook.fly.dev/sierra-webhook` with the `X-Webhook-Secret` header set to your `WEBHOOK_SECRET`. Full runbook (including droplet decommissioning) in `DEPLOY.md`.
+**URL populator**: deployed on Fly.io via the **Deploy URL populator to Fly** GitHub Actions workflow (needs `FLY_API_TOKEN` in Actions secrets), or locally: `fly apps create sierra-fub-sync`, `fly secrets set SIERRA_API_KEY=... FUB_API_KEY=...`, `fly deploy --ha=false`. No Sierra webhook needed. Full runbook and cutover steps in `DEPLOY.md`.
 
 ## Using the field in FUB templates
 

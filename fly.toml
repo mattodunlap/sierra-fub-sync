@@ -1,8 +1,10 @@
-# Fly.io config for the Sierra webhook handler.
-# Deploy with: fly deploy
-# Secrets (set once): fly secrets set SIERRA_API_KEY=... FUB_API_KEY=... WEBHOOK_SECRET=...
+# Fly.io config for the Sierra→FUB URL populator (60s FUB poll loop).
+# No inbound services on purpose: no public endpoint, no webhook secret,
+# no Sierra webhook subscription to get banned.
+# Deploy with: fly deploy --ha=false
+# Secrets (set once): fly secrets set SIERRA_API_KEY=... FUB_API_KEY=...
 
-app = "sierra-fub-webhook"
+app = "sierra-fub-sync"
 primary_region = "phx"
 
 [build]
@@ -11,21 +13,11 @@ primary_region = "phx"
 [env]
   FUB_CUSTOM_FIELD = "customSierraSearchURL"
   SIERRA_ORIGINATING_SYSTEM = "FUB-AutoLogin-Sync"
+  POLL_SECONDS = "60"
+  LOOKBACK_MINUTES = "30"
 
-[http_service]
-  internal_port = 8080
-  force_https = true
-  # Keep one machine always running so Sierra webhooks never hit a cold start.
-  auto_stop_machines = "stop"
-  auto_start_machines = true
-  min_machines_running = 1
-
-  [[http_service.checks]]
-    interval = "30s"
-    timeout = "5s"
-    grace_period = "10s"
-    method = "GET"
-    path = "/"
+[[restart]]
+  policy = "always"
 
 [[vm]]
   size = "shared-cpu-1x"
