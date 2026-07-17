@@ -1,0 +1,5 @@
+# Only webhook_handler.py + requirements.txt belong in the image.
+# Everything else is local tooling, probe output, or secrets.
+*
+!requirements.txt
+!webhook_handler.py

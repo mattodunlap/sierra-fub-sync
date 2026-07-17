@@ -5,8 +5,8 @@ A FastAPI app that Sierra calls every time a new lead registers.
 When a webhook fires, this looks the lead up in FUB and writes the
 auto-login URL into the custom field within seconds.
 
-Deploy on Render (free), Railway, Fly.io, or any host that runs Python.
-After deploy, give Sierra your public URL (e.g. https://yourapp.onrender.com/sierra-webhook)
+Deployed on Fly.io (see fly.toml + Dockerfile, and DEPLOY.md for the runbook).
+After deploy, give Sierra your public URL (e.g. https://sierra-fub-webhook.fly.dev/sierra-webhook)
 in their webhook settings.
 
 Required env vars:
