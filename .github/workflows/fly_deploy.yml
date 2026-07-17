@@ -24,12 +24,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: Create app if it doesn't exist yet
+      # Ensure the app exists. Tolerant on purpose: if it already exists, or the
+      # token is deploy-scoped (can't create), this no-ops and the deploy below
+      # proceeds against the existing app. A deploy-only token needs the app to
+      # already exist — create it once with `fly apps create sierra-fub-sync`.
+      - name: Ensure app exists
         run: flyctl apps create sierra-fub-sync || true
       - name: Sync Fly secrets from repo secrets
         # Unchanged values make flyctl exit non-zero ("no change detected") — that's fine.
         run: |
-          flyctl secrets set --app sierra-fub-sync \
+          flyctl secrets set \
             SIERRA_API_KEY="${{ secrets.SIERRA_API_KEY }}" \
             FUB_API_KEY="${{ secrets.FUB_API_KEY }}" \
             --stage || true
