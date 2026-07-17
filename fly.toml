@@ -5,7 +5,7 @@
 # Secrets (set once): fly secrets set SIERRA_API_KEY=... FUB_API_KEY=...
 
 app = "sierra-fub-sync"
-primary_region = "phx"
+primary_region = "sjc"  # phx deprecated by Fly (launch error 2026-07-16); sjc = same region as maittrix-engine
 
 [build]
   dockerfile = "Dockerfile"
