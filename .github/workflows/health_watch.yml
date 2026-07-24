@@ -1,0 +1,106 @@
+# health_watch.yml — the OUTSIDE observer + self-healer for maittrix-engine.
+#
+# Matthew 2026-07-24: "fully self sufficient with some logic built in to restart and
+# respawn." Every monitor the engine has lives ON the engine's box — if the whole app
+# goes dark, so do its alarms. This watchdog runs on GitHub's infrastructure instead:
+#
+#   every 30 min:  GET https://maittrix-engine.fly.dev/health
+#     healthy   -> close any open DOWN issue, done (silent)
+#     unhealthy -> 1) try `flyctl machine restart` with the repo's FLY_API_TOKEN
+#                     (the respawn — works with an org-scoped token; a deploy-scoped
+#                      token that can't restart just logs and moves on)
+#                  2) open/update a GitHub issue "ENGINE DOWN" -> GitHub emails
+#                     Matthew automatically. Issue auto-closes on recovery.
+#
+# Layered under this: supervisor respawns dead worker groups on-box; Fly restarts a
+# crashed machine; this catches the "everything is dark" case those two can't see.
+name: engine-health-watch
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe /health
+        id: probe
+        run: |
+          set +e
+          BODY=$(curl -sS -m 20 https://maittrix-engine.fly.dev/health)
+          CODE=$?
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          if [ $CODE -ne 0 ] || [ -z "$BODY" ]; then
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+            echo "detail=unreachable (curl exit $CODE)" >> "$GITHUB_OUTPUT"
+          elif echo "$BODY" | grep -q '"generation_ok"'; then
+            echo "healthy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+            echo "detail=answered but not the health payload" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Attempt machine restart (the respawn)
+        if: steps.probe.outputs.healthy == 'false'
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set +e
+          curl -L https://fly.io/install.sh | sh
+          export PATH="$HOME/.fly/bin:$PATH"
+          flyctl machine list -a maittrix-engine --json > /tmp/machines.json 2>/tmp/err.txt
+          if [ $? -ne 0 ]; then
+            echo "token cannot manage maittrix-engine ($(head -c 200 /tmp/err.txt)) — issue-only mode"
+            exit 0
+          fi
+          MID=$(python3 -c "import json;print(json.load(open('/tmp/machines.json'))[0]['id'])" 2>/dev/null)
+          if [ -n "$MID" ]; then
+            flyctl machine restart "$MID" -a maittrix-engine && echo "restarted $MID"
+          fi
+
+      - name: Open/refresh DOWN issue (GitHub emails Matthew)
+        if: steps.probe.outputs.healthy == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'engine-down' });
+            const detail = '${{ steps.probe.outputs.detail }}';
+            const body = `maittrix-engine /health failed at ${new Date().toISOString()}\n` +
+                         `Detail: ${detail}\nA machine restart was attempted automatically.\n` +
+                         `Portal: https://maittrix-engine.fly.dev/matrix`;
+            if (open.data.length) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: open.data[0].number, body });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: '🔴 ENGINE DOWN — maittrix-engine health check failing',
+                labels: ['engine-down'], body });
+            }
+
+      - name: Auto-close DOWN issue on recovery
+        if: steps.probe.outputs.healthy == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'engine-down' });
+            for (const i of open.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: i.number,
+                body: 'Engine healthy again at ' + new Date().toISOString() + ' — auto-closing.' });
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: i.number, state: 'closed' });
+            }
