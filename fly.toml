@@ -1,0 +1,24 @@
+# Fly.io config for the Sierra→FUB URL populator (60s FUB poll loop).
+# No inbound services on purpose: no public endpoint, no webhook secret,
+# no Sierra webhook subscription to get banned.
+# Deploy with: fly deploy --ha=false
+# Secrets (set once): fly secrets set SIERRA_API_KEY=... FUB_API_KEY=...
+
+app = "sierra-fub-sync"
+primary_region = "sjc"  # phx deprecated by Fly (launch error 2026-07-16); sjc = same region as maittrix-engine
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  FUB_CUSTOM_FIELD = "customSierraSearchURL"
+  SIERRA_ORIGINATING_SYSTEM = "FUB-AutoLogin-Sync"
+  POLL_SECONDS = "60"
+  LOOKBACK_MINUTES = "30"
+
+[[restart]]
+  policy = "always"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

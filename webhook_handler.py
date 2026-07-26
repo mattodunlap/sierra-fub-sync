@@ -5,8 +5,8 @@ A FastAPI app that Sierra calls every time a new lead registers.
 When a webhook fires, this looks the lead up in FUB and writes the
 auto-login URL into the custom field within seconds.
 
-Deploy on Render (free), Railway, Fly.io, or any host that runs Python.
-After deploy, give Sierra your public URL (e.g. https://yourapp.onrender.com/sierra-webhook)
+Deployed on Fly.io (see fly.toml + Dockerfile, and DEPLOY.md for the runbook).
+After deploy, give Sierra your public URL (e.g. https://sierra-fub-webhook.fly.dev/sierra-webhook)
 in their webhook settings.
 
 Required env vars:
@@ -23,7 +23,7 @@ Run locally:
 
 import os
 import requests
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 
 SIERRA_API_KEY = os.environ["SIERRA_API_KEY"]
 FUB_API_KEY = os.environ["FUB_API_KEY"]
@@ -40,6 +40,15 @@ SIERRA_HEADERS = {
     "Sierra-ApiKey": SIERRA_API_KEY,
     "Sierra-OriginatingSystemName": SIERRA_ORIGINATING_SYSTEM,
 }
+
+# Optional FUB registered-system headers (X-System / X-System-Key).
+# Set FUB_SYSTEM + FUB_SYSTEM_KEY as Fly secrets to identify this
+# integration to FUB; harmless to omit.
+FUB_HEADERS = {}
+if os.environ.get("FUB_SYSTEM"):
+    FUB_HEADERS["X-System"] = os.environ["FUB_SYSTEM"]
+if os.environ.get("FUB_SYSTEM_KEY"):
+    FUB_HEADERS["X-System-Key"] = os.environ["FUB_SYSTEM_KEY"]
 
 AGENT_SUBDOMAINS = {
     "matthew": "www",
@@ -128,6 +137,7 @@ def find_fub_person(email):
     r = requests.get(
         f"{FUB_BASE}/people",
         auth=(FUB_API_KEY, ""),
+        headers=FUB_HEADERS,
         params={"email": email, "fields": "allFields"},
         timeout=15,
     )
@@ -156,6 +166,7 @@ def create_fub_person(email, first_name, last_name, login_url,
     r = requests.post(
         f"{FUB_BASE}/people",
         auth=(FUB_API_KEY, ""),
+        headers=FUB_HEADERS,
         json=payload,
         timeout=15,
     )
@@ -171,6 +182,7 @@ def update_fub_person(person_id, login_url, agent_url=None,
     r = requests.put(
         f"{FUB_BASE}/people/{person_id}",
         auth=(FUB_API_KEY, ""),
+        headers=FUB_HEADERS,
         json=fields,
         timeout=15,
     )
@@ -182,11 +194,50 @@ def health():
     return {"status": "ok"}
 
 
+def process_lead(lead_id):
+    """Full Sierra fetch + FUB write. Runs AFTER the webhook is acknowledged —
+    Sierra silently bans a subscription after 4 slow/failed deliveries, so the
+    request handler must never wait on these API calls."""
+    lead = get_sierra_lead(lead_id)
+    email = lead.get("email")
+    login_url  = build_login_url(lead)
+    agent_url  = build_agent_login_url(lead)
+    search_url = build_search_url(lead)
+    admin_url  = f"{SIERRA_ADMIN_BASE}?id={lead_id}"
+
+    if not email or not login_url:
+        print(f"lead {lead_id}: skipped (missing email or login url)")
+        return
+
+    person = find_fub_person(email)
+    if person:
+        ok = update_fub_person(person["id"], login_url,
+                               agent_url=agent_url, search_url=search_url,
+                               admin_url=admin_url)
+        print(f"lead {lead_id}: updated person {person['id']} ok={ok} "
+              f"search_url={bool(search_url)}")
+    else:
+        ok = create_fub_person(
+            email=email,
+            first_name=lead.get("firstName"),
+            last_name=lead.get("lastName"),
+            login_url=login_url,
+            agent_url=agent_url,
+            search_url=search_url,
+            admin_url=admin_url,
+        )
+        print(f"lead {lead_id}: created person ok={ok} "
+              f"search_url={bool(search_url)}")
+
+
 @app.post("/sierra-webhook")
-async def sierra_webhook(request: Request):
+async def sierra_webhook(request: Request, background_tasks: BackgroundTasks):
     if WEBHOOK_SECRET:
+        # Sierra's API-based webhook registration can't attach custom headers,
+        # so the secret may arrive as a ?secret= query param instead.
         provided = request.headers.get("X-Webhook-Secret", "")
-        if provided != WEBHOOK_SECRET:
+        provided_qs = request.query_params.get("secret", "")
+        if WEBHOOK_SECRET not in (provided, provided_qs):
             raise HTTPException(status_code=401, detail="Bad secret")
 
     payload = await request.json()
@@ -198,32 +249,15 @@ async def sierra_webhook(request: Request):
     if not lead_id:
         return {"ignored": "no lead id"}
 
-    lead = get_sierra_lead(lead_id)
-    email = lead.get("email")
-    login_url  = build_login_url(lead)
-    agent_url  = build_agent_login_url(lead)
-    search_url = build_search_url(lead)
-    admin_url  = f"{SIERRA_ADMIN_BASE}?id={lead_id}"
+    # Acknowledge immediately; do the Sierra/FUB round-trips in the background.
+    background_tasks.add_task(process_lead_safe, lead_id)
+    return {"accepted": True, "lead_id": lead_id}
 
-    if not email or not login_url:
-        return {"ignored": "missing email or login url", "lead_id": lead_id}
 
-    person = find_fub_person(email)
-    if person:
-        ok = update_fub_person(person["id"], login_url,
-                                agent_url=agent_url, search_url=search_url,
-                                admin_url=admin_url)
-        return {"action": "updated", "ok": ok, "person_id": person["id"],
-                "wrote_search_url": bool(search_url)}
-    else:
-        ok = create_fub_person(
-            email=email,
-            first_name=lead.get("firstName"),
-            last_name=lead.get("lastName"),
-            login_url=login_url,
-            agent_url=agent_url,
-            search_url=search_url,
-            admin_url=admin_url,
-        )
-        return {"action": "created", "ok": ok,
-                "wrote_search_url": bool(search_url)}
+def process_lead_safe(lead_id):
+    """If processing fails, the every-5-min polling sync (GitHub Actions)
+    catches the lead on its next pass — log and move on."""
+    try:
+        process_lead(lead_id)
+    except Exception as e:
+        print(f"lead {lead_id}: processing failed ({e!r}); polling sync will catch it")

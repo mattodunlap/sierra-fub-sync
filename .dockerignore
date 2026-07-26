@@ -1,0 +1,6 @@
+# Only the app files + requirements.txt belong in the image.
+# Everything else is local tooling, probe output, or secrets.
+*
+!requirements.txt
+!webhook_handler.py
+!url_populator.py
