@@ -5,12 +5,31 @@
 # goes dark, so do its alarms. This watchdog runs on GitHub's infrastructure instead:
 #
 #   every 30 min:  GET https://maittrix-engine.fly.dev/health
-#     healthy   -> close any open DOWN issue, done (silent)
-#     unhealthy -> 1) try `flyctl machine restart` with the repo's FLY_API_TOKEN
-#                     (the respawn — works with an org-scoped token; a deploy-scoped
-#                      token that can't restart just logs and moves on)
-#                  2) open/update a GitHub issue "ENGINE DOWN" -> GitHub emails
-#                     Matthew automatically. Issue auto-closes on recovery.
+#     healthy     -> close any open issue, done (silent)
+#     unreachable -> 1) `flyctl machine restart` with the repo's FLY_API_TOKEN
+#                       (the respawn — works with an org-scoped token; a deploy-scoped
+#                        token that can't restart just logs and moves on)
+#                    2) open/update the GitHub issue -> GitHub emails Matthew.
+#     sick        -> open/update the SAME issue and NOTHING ELSE. No restart.
+#
+# 2026-09-11 (H8): the probe used to have one verdict, and any not-healthy verdict
+# restarted the machine. A restart cannot fix a dead Sierra session or a stale worker —
+# it zeroes the login backoff and re-runs login every ~2h while Sierra is blocking (a
+# ban, automated), and it duplicates PID 1's own stale-worker kill on a field with a
+# documented false-positive history. So: unreachable (curl failed, or an answer that is
+# not the health payload) restarts; sick (db_ok false, session_dead, or a non-empty
+# workers_stale) only tells Matthew. Same two copies of this file in both repos.
+#
+# db_ok is SICK, NOT UNREACHABLE, pending Matthew's call: /health's db_ok is one
+# `select 1` on one sample, and the pooler has flapped for 14 minutes before now (8/13).
+# Restarting on that re-runs the Sierra login every 30 min for as long as the blip lasts,
+# which is the harm H8 was written to remove. If he wants the restart, the faithful shape
+# is a confirm-read — curl again ~15s later and require db_ok false TWICE.
+#
+# NOTE ON CADENCE, not a bug to fix here: GitHub delivers roughly 13% of the runs this
+# cron declares, and some of those late (INFRA-STABILITY-BASELINE-2026-09-10 §2g). The
+# real dead-man line is hours, not 30 minutes. Fixing that means a prober that is not
+# GitHub Actions — a decision, not a patch. The schedule below is left exactly as it was.
 #
 # Layered under this: supervisor respawns dead worker groups on-box; Fly restarts a
 # crashed machine; this catches the "everything is dark" case those two can't see.
@@ -18,7 +37,12 @@ name: engine-health-watch
 on:
   schedule:
     - cron: "*/30 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      health_url:
+        description: "Health URL to probe (leave blank for the live engine; point it at a dead host to test the DOWN path)"
+        required: false
+        default: ""
 
 permissions:
   issues: write
@@ -31,23 +55,56 @@ jobs:
     steps:
       - name: Probe /health
         id: probe
+        env:
+          HEALTH_URL: ${{ github.event.inputs.health_url || 'https://maittrix-engine.fly.dev/health' }}
         run: |
           set +e
-          BODY=$(curl -sS -m 20 https://maittrix-engine.fly.dev/health)
+          echo "probing $HEALTH_URL"
+          BODY=$(curl -sS -m 20 "$HEALTH_URL")
           CODE=$?
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           if [ $CODE -ne 0 ] || [ -z "$BODY" ]; then
-            echo "healthy=false" >> "$GITHUB_OUTPUT"
+            echo "state=unreachable" >> "$GITHUB_OUTPUT"
             echo "detail=unreachable (curl exit $CODE)" >> "$GITHUB_OUTPUT"
-          elif echo "$BODY" | grep -q '"generation_ok"'; then
-            echo "healthy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "healthy=false" >> "$GITHUB_OUTPUT"
-            echo "detail=answered but not the health payload" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          HJ=$(mktemp)
+          printf '%s' "$BODY" > "$HJ"
+          VERDICT=$(python3 - "$HJ" <<'PY'
+          import json, sys
+          try:
+              d = json.load(open(sys.argv[1], encoding="utf-8", errors="replace"))
+          except Exception:
+              d = None
+          if not isinstance(d, dict) or "generation_ok" not in d:
+              print("unreachable|answered but not the health payload")
+              raise SystemExit
+          # db_ok is published since 2026-09-11 (portal/server.py:364-372); a false means
+          # the brain is unreadable. SICK, NOT UNREACHABLE, until Matthew says otherwise:
+          # one select 1 through the pooler is a single sample, and a restart on a blip
+          # re-runs the Sierra login every 30 min. Two samples would make it a restart.
+          if d.get("db_ok") is False:
+              print("sick|db_ok false (database unreadable)")
+              raise SystemExit
+          bad = []
+          if d.get("session_dead") is True:
+              bad.append("session_dead")
+          stale = d.get("workers_stale") or []
+          if stale:
+              bad.append("workers_stale: " + ", ".join(str(n) for n in stale))
+          print(("sick|" + "; ".join(bad))[:400] if bad else "healthy|")
+          PY
+          )
+          VERDICT=$(printf '%s' "$VERDICT" | tr '\n' ' ')
+          # 2026-09-11: an empty verdict means the probe script itself failed. Say so —
+          # sick, never unreachable: a bug in the watchdog must not restart production.
+          [ -z "${VERDICT%%|*}" ] && VERDICT="sick|probe script failed"
+          echo "state=${VERDICT%%|*}" >> "$GITHUB_OUTPUT"
+          echo "detail=${VERDICT#*|}" >> "$GITHUB_OUTPUT"
+          echo "verdict: $VERDICT"
 
-      - name: Attempt machine restart (the respawn)
-        if: steps.probe.outputs.healthy == 'false'
+      - name: Attempt machine restart (the respawn — dark box only)
+        if: steps.probe.outputs.state == 'unreachable'
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
@@ -64,31 +121,44 @@ jobs:
             flyctl machine restart "$MID" -a maittrix-engine && echo "restarted $MID"
           fi
 
-      - name: Open/refresh DOWN issue (GitHub emails Matthew)
-        if: steps.probe.outputs.healthy == 'false'
+      - name: Open/refresh the issue (GitHub emails Matthew)
+        if: steps.probe.outputs.state == 'unreachable' || steps.probe.outputs.state == 'sick'
         uses: actions/github-script@v7
+        env:
+          PROBE_STATE: ${{ steps.probe.outputs.state }}
+          PROBE_DETAIL: ${{ steps.probe.outputs.detail }}
         with:
           script: |
+            const state = process.env.PROBE_STATE;
+            const detail = process.env.PROBE_DETAIL || '';
+            const down = state === 'unreachable';
             const open = await github.rest.issues.listForRepo({
               owner: context.repo.owner, repo: context.repo.repo,
               state: 'open', labels: 'engine-down' });
-            const detail = '${{ steps.probe.outputs.detail }}';
-            const body = `maittrix-engine /health failed at ${new Date().toISOString()}\n` +
-                         `Detail: ${detail}\nA machine restart was attempted automatically.\n` +
+            const body = `maittrix-engine /health: **${state}** at ${new Date().toISOString()}\n` +
+                         `Detail: ${detail}\n` +
+                         (down ? 'A machine restart was attempted automatically.\n'
+                               : 'No restart — a restart cannot fix this, and would re-run the Sierra login.\n') +
                          `Portal: https://maittrix-engine.fly.dev/matrix`;
+            // 2026-09-11: comment on an ALREADY-OPEN issue only when the box is dark.
+            // A sick verdict repeats every 30 min (workers_stale has an all-day
+            // false-positive history) and would email him on every probe.
             if (open.data.length) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: open.data[0].number, body });
+              if (down) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: open.data[0].number, body });
+              }
             } else {
               await github.rest.issues.create({
                 owner: context.repo.owner, repo: context.repo.repo,
-                title: '🔴 ENGINE DOWN — maittrix-engine health check failing',
+                title: down ? '🔴 ENGINE DOWN — maittrix-engine health check failing'
+                            : '🟠 ENGINE SICK — maittrix-engine degraded (no restart)',
                 labels: ['engine-down'], body });
             }
 
-      - name: Auto-close DOWN issue on recovery
-        if: steps.probe.outputs.healthy == 'true'
+      - name: Auto-close the issue on recovery
+        if: steps.probe.outputs.state == 'healthy'
         uses: actions/github-script@v7
         with:
           script: |
